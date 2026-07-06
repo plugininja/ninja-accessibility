@@ -1,0 +1,1 @@
+export { useWidgetNotifications } from './useWidgetNotifications';

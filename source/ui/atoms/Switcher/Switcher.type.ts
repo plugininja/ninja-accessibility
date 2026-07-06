@@ -1,0 +1,16 @@
+import { FontSize } from "~/kernel/types/styles";
+
+export interface SwitcherProps {
+    id?: string;
+    style?: React.CSSProperties;
+    className?: string;
+    checked?: boolean;
+    title?: string;
+    titleSize?: FontSize;
+    tabIndex?: number;
+    ariaLabel?: string;
+    loading?: boolean;
+    disabled?: boolean;
+    isPro?: boolean;
+    onChange?: (checked: boolean) => void;
+}

@@ -1,0 +1,167 @@
+@use "../utilities/variable" as *;
+@use "../utilities/mixin" as *;
+
+$icon-button-sizes: (
+    microsmall: 24px,
+    supersmall: 28px,
+    extrasmall: 32px,
+    small: 36px,
+    medium: 40px,
+    large: 44px,
+    extralarge: 48px,
+);
+
+.pnpna-top-level-wrapper {
+    .pn-icon-button {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-family: $primary-font;
+        transition: all 0.3s ease;
+        background: transparent;
+
+        @each $size, $value in $icon-button-sizes {
+            &.pn-icon-button--#{$size} {
+                width: $value;
+                height: $value;
+            }
+        }
+
+        &.pn-icon-button--default {
+            color: $black;
+
+            &:hover {
+                background-color: var(--pnpna-light);
+            }
+            &:focus {
+                background-color: var(--pnpna-light);
+            }
+        }
+
+        &.pn-icon-button--primary {
+            color: $white;
+            background-color: $primary;
+
+            &:hover {
+                background-color: $primary-hover;
+            }
+            &:focus {
+                background-color: $primary;
+            }
+        }
+
+        &.pn-icon-button--secondary {
+            color: $black;
+            background-color: $secondary;
+
+            &:hover {
+                background-color: $primary-light;
+            }
+            &:focus {
+                background-color: $secondary;
+            }
+        }
+
+        &.pn-icon-button--outlined {
+            color: $black;
+            border: 1px solid $primary-light;
+
+            &:hover {
+                background-color: $primary-extralight;
+            }
+            &:focus {
+                background-color: $primary-extralight;
+            }
+        }
+
+        &.pn-icon-button--white {
+            color: $primary;
+            background-color: $white;
+
+            &:focus {
+                background-color: $white;
+            }
+        }
+
+        &.pn-icon-button--warning {
+            color: $warning;
+            background-color: hsl(from $warning h s l / 15%);
+
+            &:hover {
+                background-color: $warning-100;
+            }
+            &:focus {
+                background-color: hsl(from $warning h s l / 15%);
+            }
+        }
+
+        &.pn-icon-button--error {
+            color: $error;
+            background-color: hsl(from $error h s l / 15%);
+
+            &:hover {
+                background-color: $error-100;
+            }
+            &:focus {
+                background-color: hsl(from $error h s l / 15%);
+            }
+        }
+
+        &.pn-icon-button--link {
+            color: $black;
+            background: none;
+            border: none;
+            padding: 0;
+            text-decoration: none;
+            width: auto;
+            height: auto;
+
+            &:focus {
+                background-color: transparent;
+            }
+
+            &:after {
+                content: "";
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                width: 100%;
+                height: 1px;
+                background-color: currentColor;
+            }
+        }
+
+        &.pn-icon-button--light {
+            color: $black;
+            background-color: $primary-light;
+            border: 1px solid $primary-light;
+
+            &:hover {
+                background-color: $secondary;
+            }
+            &:focus {
+                background-color: $secondary;
+            }
+        }
+
+        &.pn-icon-button--gray {
+            color: $black;
+            background-color: $gray-50;
+            border: 1px solid $gray-200;
+
+            &:hover {
+                background-color: $gray-100;
+            }
+            &:focus {
+                background-color: $gray-100;
+            }
+        }
+
+        &.pn-icon-button--disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    }
+}

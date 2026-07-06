@@ -1,0 +1,72 @@
+@use "./utilities/variable" as *;
+@use "./utilities/mixin" as *;
+
+#pnpna-admin {
+    height: 100%;
+    background-color: $white;
+    position: fixed;
+    width: calc(100% - 160px);
+    height: calc(100vh - 32px);
+
+    @include respond-to(960px) {
+        width: calc(100% - 36px);
+    }
+
+    @include respond-to(782px) {
+        width: 100% !important;
+    }
+}
+.toplevel_page_ninja-accessibility {
+    &.folded {
+        #pnpna-admin {
+            width: calc(100% - 36px);
+        }
+    }
+
+    #wpcontent {
+        padding: 0 !important;
+    }
+}
+
+.pnpna {
+    display: flex;
+    height: 100%;
+
+    &-bg {
+        background-color: $gray-50;
+    }
+
+    &-content-wrapper {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    &-content {
+        flex: 1;
+        min-height: 0;
+        padding: var(--pnpna-space-5);
+        overflow-y: auto;
+        overflow-x: hidden;
+        scroll-behavior: smooth;
+        &::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: #c7c7c7;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        &::-webkit-scrollbar-thumb:hover {
+            background: #747775;
+        }
+    }
+}

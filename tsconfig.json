@@ -1,0 +1,20 @@
+{
+    "compilerOptions": {
+        "target": "ES2017",
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "strict": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "resolveJsonModule": true,
+        "baseUrl": ".",
+        "paths": {
+            "~/*": ["source/*"]
+        },
+        "lib": ["ES2017", "DOM"],
+        "skipLibCheck": true
+    },
+    "include": ["source/**/*"],
+    "exclude": ["node_modules", "assets", "dist-free", "dist-wporg"]
+}

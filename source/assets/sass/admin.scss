@@ -1,0 +1,123 @@
+@use "variables" as *;
+@use "mixins" as *;
+
+// ─── Material Symbols font (self-hosted, copied from node_modules by webpack) ─
+@font-face {
+    font-family: "Material Symbols Outlined";
+    font-style: normal;
+    font-weight: 100 700;
+    font-display: swap;
+    src: url("../fonts/material-symbols-outlined.woff2") format("woff2");
+}
+
+.material-symbols-outlined {
+    font-family: "Material Symbols Outlined";
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "liga";
+    font-variation-settings:
+        "FILL" 0,
+        "wght" 400,
+        "GRAD" 0,
+        "opsz" 24;
+}
+
+// ─── Admin global resets ──────────────────────────────────────────────────────
+.pnpna-settings {
+    box-sizing: border-box;
+    font-family: $font-base;
+    font-size: $font-size-base;
+    line-height: $line-height-base;
+    color: $color-text;
+    -webkit-font-smoothing: antialiased;
+
+    *,
+    *::before,
+    *::after {
+        box-sizing: inherit;
+    }
+
+    // Override WP admin defaults inside our container
+    h1,
+    h2,
+    h3,
+    h4,
+    p {
+        margin: 0;
+    }
+
+    button {
+        cursor: pointer;
+        font-family: inherit;
+    }
+
+    a {
+        text-decoration: none;
+    }
+}
+
+// ─── Loading state ────────────────────────────────────────────────────────────
+.pnpna-loading {
+    @include flex-center;
+    min-height: 200px;
+    gap: $space-3;
+    color: $color-text-muted;
+    font-size: $font-size-lg;
+}
+
+.pnpna-spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid $color-border;
+    border-top-color: $color-primary;
+    border-radius: $radius-full;
+    animation: pnpna-spin 0.7s linear infinite;
+}
+
+@keyframes pnpna-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// ─── Toast notification ───────────────────────────────────────────────────────
+.pnpna-toast {
+    position: fixed;
+    bottom: $space-6;
+    right: $space-6;
+    z-index: 99999;
+    padding: $space-3 $space-5;
+    border-radius: $radius-base;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    box-shadow: $shadow-lg;
+    transition:
+        opacity $transition-base,
+        transform $transition-base;
+    @include flex-center;
+    gap: $space-2;
+
+    &--success {
+        background: $color-success;
+        color: $color-white;
+    }
+
+    &--error {
+        background: $color-error;
+        color: $color-white;
+    }
+
+    &--hidden {
+        opacity: 0;
+        transform: translateY(8px);
+        pointer-events: none;
+    }
+}

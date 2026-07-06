@@ -1,0 +1,351 @@
+/*
+ * Admin dashboard stylesheet — ninja-drive design system.
+ */
+
+@use "./utilities/variable" as *;
+@use "./utilities/tokens";
+@use "./utilities/fonts" as *;
+@use "./utilities/default" as *;
+@use "./utilities/utility" as *;
+@use "./utilities/mixin" as *;
+@use "./components/index" as *;
+@use "./main-layout" as *;
+
+/* ── App chrome ─────────────────────────────────────────────────────────── */
+
+.pnpna-top-level-wrapper {
+    font-family: var(--pnpna-font-family);
+
+    .pnpna-logo {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+
+        &__text {
+            font-size: var(--pnpna-font-size-md);
+            color: $gray-700;
+
+            strong {
+                font-weight: var(--pnpna-font-weight-semibold);
+                color: $gray-900;
+            }
+        }
+    }
+
+    /* Statement generator */
+    .pnpna-statement-cards {
+        display: flex;
+        gap: var(--pnpna-space-5);
+    }
+
+    .pnpna-statement-card {
+        background: $white;
+        border: 1px solid $gray-200;
+        border-radius: var(--pnpna-radius-md);
+        padding: var(--pnpna-space-4);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--pnpna-space-3);
+        min-width: 180px;
+
+        &--active {
+            border-color: $primary;
+            box-shadow: 0 0 0 2px $primary-light;
+        }
+
+        &__preview {
+            width: 120px;
+            height: 80px;
+            background: $gray-50;
+            border-radius: var(--pnpna-radius-sm);
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        &__label {
+            font-size: var(--pnpna-font-size-sm);
+            font-weight: var(--pnpna-font-weight-medium);
+            color: $gray-700;
+        }
+
+        &__mock {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            padding: 12px;
+            width: 100%;
+        }
+
+        &__mock-line {
+            height: 4px;
+            background: $gray-200;
+            border-radius: 2px;
+
+            &--title {
+                width: 60px;
+                height: 6px;
+                background: $primary;
+                border-radius: 3px;
+            }
+        }
+
+        &__mock-add {
+            border: 2px dashed $primary;
+            border-radius: 6px;
+            width: 56px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: $primary;
+            font-size: 18px;
+        }
+    }
+
+    .pnpna-statement-preview {
+        background: $gray-50;
+        border: 1px solid $gray-200;
+        border-radius: var(--pnpna-radius-md);
+        padding: var(--pnpna-space-4);
+        max-height: 360px;
+        overflow-y: auto;
+        font-size: var(--pnpna-font-size-xs);
+        color: $gray-600;
+
+        h2 {
+            font-size: var(--pnpna-font-size-sm);
+            color: $gray-800;
+            margin-top: 0;
+        }
+    }
+
+    /* Cursor shape picker + live preview */
+    .pnpna-cursor-grid {
+        display: flex;
+        gap: var(--pnpna-space-2);
+        flex-wrap: wrap;
+
+        &__item {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: $white;
+            border: 1px solid $gray-200;
+            border-radius: var(--pnpna-radius-sm);
+            cursor: pointer;
+
+            &--active {
+                border-color: $primary;
+                box-shadow: 0 0 0 2px $primary-light;
+            }
+        }
+    }
+
+    .pnpna-preview-cursor-box {
+        border: 1px dashed $gray-300;
+        border-radius: var(--pnpna-radius-md);
+        background: $gray-50;
+        min-height: 260px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &__hint {
+            color: $gray-500;
+            font-size: var(--pnpna-font-size-sm);
+            text-align: center;
+            padding: var(--pnpna-space-4);
+        }
+    }
+}
+
+/* ── Modal (Statement generator) ───────────────────────────────────────── */
+
+.pnpna-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 14, 37, 0.55);
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--pnpna-font-family);
+}
+
+.pnpna-modal {
+    background: var(--pnpna-white, #fff);
+    border-radius: var(--pnpna-radius-lg);
+    width: min(960px, calc(100vw - 48px));
+    max-height: calc(100vh - 80px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--pnpna-space-4) var(--pnpna-space-5);
+        border-bottom: 1px solid var(--pnpna-gray-200);
+    }
+
+    &__title {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: var(--pnpna-font-weight-medium);
+        color: var(--pnpna-gray-800);
+    }
+
+    &__close {
+        background: none;
+        border: 0;
+        cursor: pointer;
+        color: var(--pnpna-gray-600);
+        display: flex;
+    }
+
+    &__body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--pnpna-space-6);
+        padding: var(--pnpna-space-5);
+        overflow-y: auto;
+    }
+
+    &__footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--pnpna-space-3);
+        padding: var(--pnpna-space-4) var(--pnpna-space-5);
+        border-top: 1px solid var(--pnpna-gray-200);
+    }
+}
+
+/* ── App-specific controls ─────────────────────────────────────────────── */
+
+.pnpna-top-level-wrapper {
+    /* Keep topbar action buttons on one line. */
+    .pn-topbar .pn-button {
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .pn-topbar {
+        padding: var(--pnpna-space-3) var(--pnpna-space-5);
+    }
+
+    .pnpna-app-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        color: $primary;
+    }
+
+    .pnpna-icon-choice {
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        background: $white;
+        border: 1px solid $gray-200;
+        border-radius: var(--pnpna-radius-sm);
+        cursor: pointer;
+
+        &--active {
+            border-color: $primary;
+            box-shadow: 0 0 0 2px $primary-light;
+        }
+    }
+
+    .pnpna-position-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 44px);
+        gap: 6px;
+
+        &__cell {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: $white;
+            border: 1px solid $gray-200;
+            border-radius: var(--pnpna-radius-sm);
+            color: $gray-500;
+            cursor: pointer;
+
+            &--center {
+                background: $gray-50;
+                border-style: dashed;
+                cursor: default;
+            }
+
+            &--active {
+                border-color: $primary;
+                background: $primary-extralight;
+            }
+        }
+
+        &__dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: $primary;
+        }
+    }
+
+    .pnpna-capability {
+        border: 1px solid $gray-200;
+        border-radius: var(--pnpna-radius-md);
+        padding: var(--pnpna-space-3) var(--pnpna-space-4);
+        background: $white;
+    }
+
+    .pnpna-selectors-input {
+        width: 100%;
+        max-width: 420px;
+        padding: 8px 12px;
+        border: 1px solid $gray-200;
+        border-radius: var(--pnpna-radius-sm);
+        font-size: var(--pnpna-font-size-sm);
+        color: $gray-700;
+
+        &:focus {
+            border-color: $primary;
+            outline: none;
+            box-shadow: 0 0 0 2px $primary-light;
+        }
+    }
+}
+
+/* ── Toast ─────────────────────────────────────────────────────────────── */
+
+.pnpna-toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 100001;
+    padding: 12px 18px;
+    border-radius: var(--pnpna-radius-md);
+    font-family: var(--pnpna-font-family);
+    font-size: var(--pnpna-font-size-sm);
+    color: var(--pnpna-white, #fff);
+    box-shadow: 0 6px 24px rgba(0, 14, 37, 0.18);
+
+    &--success {
+        background: var(--pnpna-success, #00ac47);
+    }
+
+    &--error {
+        background: var(--pnpna-error, #ff0000);
+    }
+}
