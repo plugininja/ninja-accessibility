@@ -148,7 +148,12 @@ class Display {
 				height: auto;
 			}
 		';
-		wp_add_inline_style( 'pnpna-frontend', $css );
+
+		// Standalone handle: the skip link must work even when the widget
+		// (and therefore the pnpna-frontend handle) is disabled.
+		wp_register_style( 'pnpna-skip-link', false, array(), PNPNA_VERSION );
+		wp_enqueue_style( 'pnpna-skip-link' );
+		wp_add_inline_style( 'pnpna-skip-link', $css );
 
 		$js = '
 			document.addEventListener("DOMContentLoaded", function () {
@@ -158,7 +163,10 @@ class Display {
 				}
 			});
 		';
-		wp_add_inline_script( 'pnpna-frontend', $js );
+
+		wp_register_script( 'pnpna-skip-link', '', array(), PNPNA_VERSION, true );
+		wp_enqueue_script( 'pnpna-skip-link' );
+		wp_add_inline_script( 'pnpna-skip-link', $js );
 	}
 
 	// -------------------------------------------------------------------------
@@ -184,8 +192,9 @@ class Display {
 			$hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
 		}
 
-		if ( 6 !== strlen( $hex ) ) {
-			return '#' . $hex;
+		// Malformed value (wrong length or non-hex chars): fall back to default.
+		if ( 6 !== strlen( $hex ) || ! ctype_xdigit( $hex ) ) {
+			return '#003C43';
 		}
 
 		$r         = hexdec( substr( $hex, 0, 2 ) ) / 255;

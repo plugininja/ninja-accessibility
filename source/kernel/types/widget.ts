@@ -20,6 +20,7 @@ export type FeatureKey =
 	| 'pause_animation'
 	| 'mute_sounds'
 	| 'reading_line'
+	| 'outline_focus'
 	| 'grey_scale'
 	| 'contrast'
 	| 'invert_color'

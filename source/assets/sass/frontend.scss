@@ -249,12 +249,12 @@
 }
 
 // ─── Accessibility panel ─────────────────────────────────────────────────────
-// Design tokens from Figma (Accessiy widget)
-$pnpna-brand-purple: #6750a4;
-$pnpna-light-purple: #f4effe;
-$pnpna-text-primary: #625b71;
-$pnpna-text-secondary: #7a7289;
-$pnpna-border-light: #e8e0f0;
+// Design tokens from Figma (Accessiy design system)
+$pnpna-brand-primary: #003c43; // primary dark teal
+$pnpna-brand-tint: #e3fef7; // light teal tint
+$pnpna-text-primary: #0f2e30;
+$pnpna-text-secondary: #6c8e92;
+$pnpna-border-light: #d6e4e1;
 $pnpna-white: #ffffff;
 
 // Panel block
@@ -309,92 +309,57 @@ $pnpna-white: #ffffff;
 
     // ─── Panel elements ───────────────────────────────────────────────────────
 
-    // Topbar
+    // Topbar — dark teal header (accessiy design)
     &__topbar {
         @include flex-between;
-        height: 48px;
-        padding: 0 $space-4;
-        background: $pnpna-white;
-        border-bottom: 1px solid $pnpna-border-light;
+        gap: $space-2;
+        height: 44px;
+        padding: 0 $space-2 0 $space-3;
+        background: $pnpna-brand-primary;
         flex-shrink: 0;
     }
 
-    // Topbar logo
-    &__topbar-logo {
-        font-size: 16px;
-        font-weight: 700;
-        color: $pnpna-brand-purple;
+    // Topbar title
+    &__topbar-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: $pnpna-white;
         line-height: 1;
+        white-space: nowrap;
     }
 
-    // Topbar skip link
-    &__topbar-skip {
-        background: none;
-        border: none;
-        font-size: 13px;
-        font-weight: 500;
-        color: $pnpna-text-primary;
-        cursor: pointer;
-        padding: 0;
-        line-height: 1;
-
-        &:hover {
-            color: $pnpna-brand-purple;
-        }
-
-        &:focus-visible {
-            @include focus-ring;
-        }
-    }
-
-    // Tabs container
-    &__tabs {
-        display: flex;
-        background: $pnpna-light-purple;
-        border-bottom: 1px solid $pnpna-border-light;
-        flex-shrink: 0;
-    }
-
-    // Individual tab
-    &__tab {
-        flex: 1;
+    // Topbar action cluster (language / reset / hide / close)
+    &__topbar-actions {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: 6px;
-        height: 48px;
-        padding: 0 $space-3;
-        border: none;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    // Topbar icon button
+    &__topbar-btn {
+        @include flex-center;
+        width: 30px;
+        height: 30px;
         background: transparent;
-        font-size: 14px;
-        font-weight: 500;
-        color: $pnpna-text-primary;
+        border: none;
+        border-radius: 6px;
         cursor: pointer;
-        border-bottom: 3px solid transparent;
-        margin-bottom: -1px;
-        transition:
-            color $transition-fast,
-            background $transition-fast,
-            border-color $transition-fast;
+        flex-shrink: 0;
+        transition: background $transition-fast;
 
         .material-symbols-outlined {
             font-size: 18px;
+            color: $pnpna-white;
             line-height: 1;
         }
 
         &:hover {
-            color: $pnpna-brand-purple;
+            background: rgba(255, 255, 255, 0.15);
         }
 
         &:focus-visible {
-            @include focus-ring;
-        }
-
-        // Active tab state
-        &--active {
-            color: $pnpna-brand-purple;
-            background: $pnpna-white;
-            border-bottom-color: $pnpna-brand-purple;
+            @include focus-ring($pnpna-white, 2px);
         }
     }
 
@@ -411,11 +376,20 @@ $pnpna-white: #ffffff;
         gap: $space-2;
     }
 
-    // Steppers container
-    &__steppers {
-        display: flex;
-        flex-direction: column;
-        gap: $space-2;
+    // Section label pill (CONTENT / COLOR)
+    &__section-pill {
+        align-self: center;
+        padding: 5px 18px;
+        background: $pnpna-white;
+        border: 1px solid $pnpna-border-light;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: $pnpna-text-primary;
+        line-height: 1;
+        margin: $space-1 0;
     }
 
     // Tiles grid
@@ -425,149 +399,158 @@ $pnpna-white: #ffffff;
         gap: $space-2;
     }
 
-    // Bottom bar
-    &__bottombar {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        height: 56px;
-        padding: 0 $space-4;
-        background: $pnpna-light-purple;
-        border-top: 1px solid $pnpna-border-light;
+    // Footer — dark teal bar: statement link + opt-in attribution
+    &__footer {
+        @include flex-between;
+        gap: $space-2;
+        min-height: 34px;
+        padding: 0 $space-3;
+        background: $pnpna-brand-primary;
         flex-shrink: 0;
-    }
 
-    // Bottom bar controls label
-    &__bottombar-controls {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        font-weight: 500;
-        color: $pnpna-text-primary;
-
-        .material-symbols-outlined {
-            font-size: 18px;
+        a {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 400;
+            color: $pnpna-white;
+            text-decoration: none;
             line-height: 1;
-        }
-    }
-
-    // Bottom bar reset button
-    &__bottombar-reset {
-        @include flex-center;
-        width: 40px;
-        height: 40px;
-        background: $pnpna-white;
-        border: 1px solid $pnpna-border-light;
-        border-radius: 50%;
-        cursor: pointer;
-        transition:
-            background $transition-fast,
-            border-color $transition-fast,
-            transform $transition-fast;
-
-        .material-symbols-outlined {
-            font-size: 20px;
-            color: $pnpna-text-primary;
-            line-height: 1;
-        }
-
-        &:hover {
-            background: $pnpna-brand-purple;
-            border-color: $pnpna-brand-purple;
-            transform: rotate(-45deg);
 
             .material-symbols-outlined {
-                color: $pnpna-white;
+                font-size: 13px;
+                line-height: 1;
             }
-        }
 
-        &:focus-visible {
-            @include focus-ring;
+            strong {
+                font-weight: 700;
+            }
+
+            &:hover {
+                text-decoration: underline;
+            }
+
+            &:focus-visible {
+                @include focus-ring($pnpna-white, 2px);
+            }
         }
     }
 }
 
-// ─── Stepper card ─────────────────────────────────────────────────────────────
-.pnpna-stepper {
-    background: $pnpna-light-purple;
-    border: 1.5px solid transparent;
-    border-radius: 12px;
-    padding: $space-3 $space-2;
+// ─── Language selector (lives in the teal panel header) ───────────────────────
+.pnpna-lang {
+    position: relative;
+    min-width: 0;
 
-    // Active state
-    &--active {
-        border-color: $pnpna-brand-purple;
-        background: rgba($pnpna-brand-purple, 0.08);
-    }
-
-    // Stepper title
-    &__title {
-        @include flex-center;
-        gap: 6px;
-        margin-bottom: $space-2;
-        font-size: 13px;
-        font-weight: 500;
-        color: $pnpna-text-primary;
-
-        .material-symbols-outlined {
-            font-size: 18px;
-            line-height: 1;
-        }
-    }
-
-    // Stepper controls row
-    &__controls {
-        @include flex-center;
-        gap: $space-1;
-    }
-
-    // Stepper +/- buttons
-    &__btn {
-        @include flex-center;
-        width: 32px;
-        height: 32px;
-        flex-shrink: 0;
-        background: $pnpna-brand-purple;
-        border: none;
-        border-radius: 50%;
+    &__button {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        max-width: 130px;
+        height: 30px;
+        padding: 0 6px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        border-radius: 999px;
         cursor: pointer;
-        transition: opacity $transition-fast;
+        transition: background $transition-fast;
 
-        .material-symbols-outlined {
-            font-size: 18px;
+        &:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        &:focus-visible {
+            @include focus-ring($pnpna-white, 2px);
+        }
+
+        .pnpna-lang__label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            font-size: 11px;
+            font-weight: 500;
             color: $pnpna-white;
             line-height: 1;
         }
 
-        &:hover:not(:disabled) {
-            opacity: 0.85;
-        }
-
-        &:focus-visible {
-            @include focus-ring;
-        }
-
-        &:disabled {
-            opacity: 0.35;
-            cursor: default;
+        .pnpna-lang__caret {
+            font-size: 14px;
+            color: $pnpna-white;
+            line-height: 1;
+            flex-shrink: 0;
         }
     }
 
-    // Stepper value display
-    &__value {
-        flex: 1;
-        @include flex-center;
-        height: 32px;
+    &__flag {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    &__dropdown {
+        position: absolute;
+        top: calc(100% + 6px);
+        right: 0;
+        z-index: 10;
+        width: 180px;
+        max-height: 260px;
+        overflow-y: auto;
+        @include thin-scrollbar;
+        margin: 0;
+        padding: 4px;
+        list-style: none;
         background: $pnpna-white;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 600;
-        color: $pnpna-text-primary;
+        border: 1px solid $pnpna-border-light;
+        border-radius: 10px;
+        box-shadow: $shadow-lg;
+
+        li {
+            margin: 0;
+
+            button {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                width: 100%;
+                padding: 7px 8px;
+                background: transparent;
+                border: none;
+                border-radius: 6px;
+                cursor: pointer;
+                text-align: left;
+
+                .pnpna-lang__label {
+                    font-size: 12px;
+                    font-weight: 500;
+                    color: $pnpna-text-primary;
+                    line-height: 1;
+                }
+
+                &:hover {
+                    background: $pnpna-brand-tint;
+                }
+
+                &:focus-visible {
+                    @include focus-ring;
+                }
+            }
+        }
+
+        .pnpna-lang__item--selected button {
+            background: $pnpna-brand-tint;
+
+            .pnpna-lang__label {
+                color: $pnpna-brand-primary;
+                font-weight: 700;
+            }
+        }
     }
 }
 
-// ─── Toggle tile ───────────────────────────────────────────────────────────────
+// ─── Feature tile (accessiy design: white card, thin border) ──────────────────
 .pnpna-tile {
     @include flex-col;
     align-items: center;
@@ -576,9 +559,9 @@ $pnpna-white: #ffffff;
     width: 100%;
     min-height: 74px;
     padding: $space-2;
-    background: $color-bg;
-    border: 1.5px solid transparent;
-    border-radius: 12px;
+    background: $pnpna-white;
+    border: 1px solid $pnpna-border-light;
+    border-radius: 8px;
     cursor: pointer;
     text-align: center;
     transition:
@@ -588,32 +571,32 @@ $pnpna-white: #ffffff;
     position: relative;
 
     &:hover {
-        background: darken(#eef2f4, 3%);
-        border-color: darken($color-border, 8%);
+        background: $pnpna-brand-tint;
+        border-color: $pnpna-brand-primary;
     }
     &:focus-visible {
         @include focus-ring;
     }
 
     &--active {
-        border-color: var(--pnpna-primary-color);
-        background: rgba($pnpna-brand-purple, 0.12);
+        border-color: $pnpna-brand-primary;
+        background: $pnpna-brand-tint;
 
         .pnpna-tile__icon {
-            color: $pnpna-brand-purple;
+            color: $pnpna-brand-primary;
         }
 
         .pnpna-tile__label {
-            color: $pnpna-brand-purple;
+            color: $pnpna-brand-primary;
             font-weight: 600;
         }
 
         .pnpna-tile__dot {
-            background: rgba($pnpna-brand-purple, 0.25);
+            background: rgba($pnpna-brand-primary, 0.25);
         }
 
         .pnpna-tile__dot--on {
-            background: $pnpna-brand-purple;
+            background: $pnpna-brand-primary;
         }
     }
 
@@ -638,6 +621,12 @@ $pnpna-white: #ffffff;
         transition: color $transition-fast;
     }
 
+    // Current step value shown inline after the label (e.g. "Text Size 1.25x")
+    &__value {
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
     // Step dots (for multi-step toggles)
     &__dots {
         @include flex-center;
@@ -653,7 +642,7 @@ $pnpna-white: #ffffff;
         transition: background $transition-fast;
 
         &--on {
-            background: $pnpna-brand-purple;
+            background: $pnpna-brand-primary;
         }
     }
 }
@@ -677,9 +666,9 @@ $pnpna-white: #ffffff;
         color $transition-fast;
 
     &:hover {
-        background: $pnpna-light-purple;
-        border-color: $pnpna-brand-purple;
-        color: $pnpna-brand-purple;
+        background: $pnpna-brand-tint;
+        border-color: $pnpna-brand-primary;
+        color: $pnpna-brand-primary;
     }
 
     &:focus-visible {
@@ -692,10 +681,16 @@ $pnpna-white: #ffffff;
         color: $pnpna-text-primary;
     }
 
-    &--danger {
-        background: #dc362e;
-        border-color: #dc362e;
+    &--primary {
+        background: $pnpna-brand-primary;
+        border-color: $pnpna-brand-primary;
         color: $pnpna-white;
+
+        &:hover {
+            background: #041c1f;
+            border-color: #041c1f;
+            color: $pnpna-white;
+        }
     }
 }
 
@@ -749,8 +744,12 @@ $pnpna-white: #ffffff;
     right: 0;
     bottom: 0;
     z-index: $z-overlay;
+    // The container must stay transparent: the dark surround is painted by
+    // the window's box-shadow, which leaves a clear reading strip. A dark
+    // background here would cover the window too.
+    background: transparent;
+    overflow: hidden;
     pointer-events: none;
-    background: rgba(0, 0, 0, 0.85);
 
     &__window {
         position: absolute;
@@ -758,8 +757,10 @@ $pnpna-white: #ffffff;
         right: 0;
         height: 80px;
         background: transparent;
-        box-shadow: 0 0 0 0 transparent;
+        // Huge shadow darkens everything around the strip (the "hole" trick).
+        box-shadow: 0 0 0 200vmax rgba(0, 0, 0, 0.85);
         transition: top 60ms ease;
+        pointer-events: none;
     }
 }
 
@@ -902,70 +903,114 @@ $pnpna-white: #ffffff;
 
 // ─── Body-level accessibility overrides ───────────────────────────────────────
 
-// Font sizing steps (110% → 140%). The widget UI itself is excluded.
+// ─── Widget immunity ──────────────────────────────────────────────────────────
+// Every page-level adjustment MUST leave the plugin's own UI untouched.
+// All plugin-owned top-level elements (widget, dialogs, overlays, cursor
+// effects) are excluded from every feature rule via these selector chains.
+
+// Excludes plugin UI roots AND their descendants (for `*`-based rules).
+$pnpna-exclude: ':not(#pnpna-frontend):not(#pnpna-frontend *)' +
+    ':not(.pnpna-page-structure):not(.pnpna-page-structure *)' +
+    ':not(.pnpna-sitemap):not(.pnpna-sitemap *)' +
+    ':not(.pnpna-reading-mask):not(.pnpna-reading-mask *)' +
+    ':not(.pnpna-reading-line)' +
+    ':not(#pnpna-custom-cursor):not(.pnpna-fx)';
+
+// Excludes plugin UI roots among body's direct children (for filter rules).
+$pnpna-exclude-top: ':not(#pnpna-frontend):not(.pnpna-page-structure)' +
+    ':not(.pnpna-sitemap):not(.pnpna-reading-mask):not(.pnpna-reading-line)' +
+    ':not(#pnpna-custom-cursor):not(.pnpna-fx)' +
+    ':not(script):not(style):not(link)';
+
+// Font sizing steps (110% → 140%).
 @each $step, $scale in (1: 1.1em, 2: 1.2em, 3: 1.3em, 4: 1.4em) {
-    body.pnpna-bigger-text-#{$step}
-        *:not(#pnpna-frontend):not(#pnpna-frontend *) {
+    body.pnpna-bigger-text-#{$step} *#{$pnpna-exclude} {
         font-size: $scale !important;
     }
 }
 
 // Line-height steps (1.5 → 2.4).
 @each $step, $lh in (1: 1.5, 2: 1.8, 3: 2.1, 4: 2.4) {
-    body.pnpna-line-height-#{$step}
-        *:not(br):not(#pnpna-frontend):not(#pnpna-frontend *) {
+    body.pnpna-line-height-#{$step} *:not(br)#{$pnpna-exclude} {
         line-height: $lh !important;
     }
 }
 
 // Letter-spacing steps (1px → 4px).
 @each $step, $ls in (1: 1px, 2: 2px, 3: 3px, 4: 4px) {
-    body.pnpna-letter-spacing-#{$step}
-        *:not(#pnpna-frontend):not(#pnpna-frontend *) {
+    body.pnpna-letter-spacing-#{$step} *#{$pnpna-exclude} {
         letter-spacing: $ls !important;
     }
 }
 
 // Text-align steps: 1 = center, 2 = left, 3 = right.
 @each $step, $align in (1: center, 2: left, 3: right) {
-    body.pnpna-text-align-#{$step}
-        *:not(#pnpna-frontend):not(#pnpna-frontend *) {
+    body.pnpna-text-align-#{$step} *#{$pnpna-exclude} {
         text-align: $align !important;
+    }
+}
+
+// ─── Page filters — applied to body's direct children, NEVER to body itself.
+// Filtering body would (a) restyle the widget and (b) turn body into a
+// containing block, breaking the widget's position: fixed.
+@mixin pnpna-page-filter($filter) {
+    > *#{$pnpna-exclude-top} {
+        filter: $filter !important;
     }
 }
 
 // Brightness steps: dim / bright / brighter.
 body.pnpna-brightness-1 {
-    filter: brightness(75%) !important;
+    @include pnpna-page-filter(brightness(75%));
 }
 body.pnpna-brightness-2 {
-    filter: brightness(120%) !important;
+    @include pnpna-page-filter(brightness(120%));
 }
 body.pnpna-brightness-3 {
-    filter: brightness(145%) !important;
+    @include pnpna-page-filter(brightness(145%));
 }
 
 // Saturation steps: low / high / very high.
 body.pnpna-saturation-1 {
-    filter: saturate(50%) !important;
+    @include pnpna-page-filter(saturate(50%));
 }
 body.pnpna-saturation-2 {
-    filter: saturate(160%) !important;
+    @include pnpna-page-filter(saturate(160%));
 }
 body.pnpna-saturation-3 {
-    filter: saturate(220%) !important;
+    @include pnpna-page-filter(saturate(220%));
 }
 
-body.pnpna-readable-font,
-body.pnpna-readable-font *:not(.material-symbols-outlined) {
+body.pnpna-greyscale {
+    @include pnpna-page-filter(grayscale(100%));
+}
+
+body.pnpna-high-contrast {
+    @include pnpna-page-filter(contrast(200%));
+}
+
+body.pnpna-invert-colors {
+    @include pnpna-page-filter(unquote("invert(100%) hue-rotate(180deg)"));
+
+    // Re-invert media inside the filtered wrappers so photos look natural.
+    > *#{$pnpna-exclude-top} {
+        img,
+        video,
+        canvas {
+            filter: invert(100%) hue-rotate(180deg) !important;
+        }
+    }
+}
+
+body.pnpna-readable-font *:not(.material-symbols-outlined)#{$pnpna-exclude} {
     font-family: Arial, Helvetica, sans-serif !important;
 }
 
 body.pnpna-highlight-links {
-    a,
-    button:not(.pnpna-toggle-btn):not(.pnpna-panel__icon-btn):not(
-            .pnpna-tile
-        ):not(.pnpna-stepper__btn):not(.pnpna-pill) {
+    a:not(#pnpna-frontend a):not(.pnpna-page-structure a):not(.pnpna-sitemap a),
+    button:not(#pnpna-frontend button):not(.pnpna-page-structure button):not(
+            .pnpna-sitemap button
+        ) {
         text-decoration: underline !important;
         outline: 2px solid currentColor !important;
         outline-offset: 2px !important;
@@ -979,52 +1024,45 @@ body.pnpna-hide-native-cursor * {
 }
 
 body.pnpna-hide-images {
-    img {
+    img:not(#pnpna-frontend img):not(.pnpna-page-structure img):not(
+            .pnpna-sitemap img
+        ) {
         visibility: hidden !important;
     }
-    figure {
+    figure:not(#pnpna-frontend figure) {
         visibility: hidden !important;
     }
 }
 
-body.pnpna-pause-animations,
-body.pnpna-pause-animations *,
-body.pnpna-pause-animations ::before,
-body.pnpna-pause-animations ::after {
+body.pnpna-pause-animations {
+    scroll-behavior: auto !important;
+}
+body.pnpna-pause-animations *#{$pnpna-exclude},
+body.pnpna-pause-animations *#{$pnpna-exclude}::before,
+body.pnpna-pause-animations *#{$pnpna-exclude}::after {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
 }
 
-body.pnpna-greyscale {
-    filter: grayscale(100%) !important;
-    * {
-        filter: none !important;
-    }
-    // re-apply only on body
-}
-
-body.pnpna-greyscale {
-    filter: grayscale(100%) !important;
-}
-
-body.pnpna-high-contrast {
-    filter: contrast(200%) !important;
-}
-
-body.pnpna-invert-colors {
-    filter: invert(100%) hue-rotate(180deg) !important;
-
-    img,
-    video,
-    canvas,
-    svg {
-        filter: invert(100%) hue-rotate(180deg) !important;
+// Outline Focus — high-visibility outline on every focusable element so
+// keyboard users can always see where they are. The widget has its own
+// focus styling and is excluded.
+body.pnpna-outline-focus {
+    a:focus#{$pnpna-exclude},
+    button:focus#{$pnpna-exclude},
+    input:focus#{$pnpna-exclude},
+    select:focus#{$pnpna-exclude},
+    textarea:focus#{$pnpna-exclude},
+    [tabindex]:focus#{$pnpna-exclude},
+    [contenteditable]:focus#{$pnpna-exclude} {
+        outline: 3px solid #e8452c !important;
+        outline-offset: 2px !important;
     }
 }
 
 body.pnpna-text-magnifier {
-    *:not(.pnpna-widget):not(#pnpna-frontend) {
+    *#{$pnpna-exclude} {
         &:hover {
             font-size: 1.5em !important;
             background: rgba(255, 255, 0, 0.2) !important;
@@ -1032,8 +1070,6 @@ body.pnpna-text-magnifier {
         }
     }
 }
-
-// Brightness / saturation applied via inline style on body
 
 /* ── Additions: restructure (kernel/features) ─────────────────────────── */
 

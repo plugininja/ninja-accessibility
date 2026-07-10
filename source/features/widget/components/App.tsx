@@ -174,13 +174,6 @@ export default function App( { settings: phpSettings = {} }: Props ) {
 				onFeatureStep={ handleFeatureStep }
 				onResetAll={ handleResetAll }
 				onHideInterface={ handleHideInterface }
-				onSkipToContent={ () => {
-					const target = document.getElementById( 'main' ) || document.querySelector( 'main' ) || document.querySelector( '[role="main"]' );
-					if ( target ) {
-						( target as HTMLElement ).tabIndex = -1;
-						( target as HTMLElement ).focus();
-					}
-				} }
 			/>
 		</>
 	);

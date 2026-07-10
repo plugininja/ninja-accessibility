@@ -44,6 +44,16 @@ class Enqueue {
 		$file_path   = PNPNA_ASSETS . "/{$args['folder']}/{$handle}.css";
 		$full_handle = 'pnpna-' . $handle;
 
+		// Cache-bust during local development (matches script() behaviour) so
+		// rebuilt CSS is never served stale from the browser cache.
+		if ( defined( 'WP_ENVIRONMENT_TYPE' ) && 'local' === WP_ENVIRONMENT_TYPE ) {
+			$abs_path = PNPNA_ASSETS_PATH . "/{$args['folder']}/{$handle}.css";
+
+			if ( file_exists( $abs_path ) ) {
+				$args['ver'] = (string) filemtime( $abs_path );
+			}
+		}
+
 		if ( 'enqueue' === $args['type'] ) {
 			wp_enqueue_style( $full_handle, $file_path, $deps, $args['ver'] );
 		} elseif ( 'register' === $args['type'] ) {
@@ -219,8 +229,8 @@ class Enqueue {
 			// works for logged-out visitors (no REST nonce required).
 			$data['activeElements'] = Helpers::get_active_elements();
 			$data['cursorEffect']   = (string) Helpers::get_setting( 'cursor_effect_type', 'none' );
-			$data['statementUrl']   = esc_url( (string) Helpers::get_setting( 'statement_url', '' ) );
-			$data['showBranding']   = '1' === Helpers::get_setting( 'show_branding', '1' );
+						$data['statementUrl']   = esc_url( (string) Helpers::get_setting( 'statement_url', '' ) );
+			$data['showBranding']   = '1' === Helpers::get_setting( 'show_branding', '0' );
 			$data['language']       = sanitize_key( (string) Helpers::get_setting( 'widget_language', 'en' ) );
 			// The frontend never talks to the REST API; do not expose a nonce.
 			unset( $data['nonce'] );

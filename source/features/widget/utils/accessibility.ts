@@ -29,6 +29,7 @@ export const STEP_COUNTS: Record<FeatureKey, number> = {
 	pause_animation:    1,
 	mute_sounds:        1,
 	reading_line:       1,
+	outline_focus:      1,
 	grey_scale:         1,
 	contrast:           1,
 	invert_color:       1,
@@ -89,9 +90,20 @@ const contentScalingFeature: FeatureImpl = {
 	apply( step: number ): void {
 		const scale = 1 + Math.max( 0, Math.min( step, 4 ) ) * 0.1;
 		( document.documentElement.style as CSSStyleDeclaration & { zoom: string } ).zoom = String( scale );
+
+		// Counter-zoom the widget so the plugin UI itself never rescales.
+		const widget = document.getElementById( 'pnpna-frontend' );
+		if ( widget ) {
+			( widget.style as CSSStyleDeclaration & { zoom: string } ).zoom = String( 1 / scale );
+		}
 	},
 	remove(): void {
 		( document.documentElement.style as CSSStyleDeclaration & { zoom: string } ).zoom = '';
+
+		const widget = document.getElementById( 'pnpna-frontend' );
+		if ( widget ) {
+			( widget.style as CSSStyleDeclaration & { zoom: string } ).zoom = '';
+		}
 	},
 };
 
@@ -182,8 +194,13 @@ const readingMaskFeature: FeatureImpl = {
 		readingMaskEl = document.createElement( 'div' );
 		readingMaskEl.className = 'pnpna-reading-mask';
 		readingMaskEl.setAttribute( 'aria-hidden', 'true' );
+		// Inline, so no theme stylesheet can ever make the mask swallow clicks.
+		readingMaskEl.style.pointerEvents = 'none';
 		maskWindowEl = document.createElement( 'div' );
 		maskWindowEl.className = 'pnpna-reading-mask__window';
+		maskWindowEl.style.pointerEvents = 'none';
+		// Start mid-viewport so the mask looks right before the first mousemove.
+		maskWindowEl.style.top = Math.round( window.innerHeight / 2 - 40 ) + 'px';
 		readingMaskEl.appendChild( maskWindowEl );
 		document.body.appendChild( readingMaskEl );
 		document.addEventListener( 'mousemove', maskMouseMove );
@@ -417,6 +434,7 @@ export const FEATURES: Record<FeatureKey, FeatureImpl> = {
 	pause_animation:    toggleBodyClass( 'pnpna-pause-animations' ),
 	mute_sounds:        muteSoundsFeature,
 	reading_line:       readingLineFeature,
+	outline_focus:      toggleBodyClass( 'pnpna-outline-focus' ),
 	grey_scale:         toggleBodyClass( 'pnpna-greyscale' ),
 	contrast:           toggleBodyClass( 'pnpna-high-contrast' ),
 	invert_color:       toggleBodyClass( 'pnpna-invert-colors' ),

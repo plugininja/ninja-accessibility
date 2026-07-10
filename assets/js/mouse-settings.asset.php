@@ -1,1 +1,1 @@
-<?php return array('dependencies' => array(), 'version' => '8214b99387635507ba14', 'handle' => 'undefined-mouse-settings');
+<?php return array('dependencies' => array(), 'version' => '90f614bd59ec5103810f', 'handle' => 'undefined-mouse-settings');

@@ -91,14 +91,12 @@ export default function General() {
 						onChange={ ( checked ) => update( 'show_branding', checked ? '1' : '0' ) }
 					/>
 					<Description
-						text={ __( 'Display a small attribution link in the widget footer.', 'ninja-accessibility' ) }
+						text={ __( 'Display a small attribution link in the widget footer. Disabled by default — no external link is shown on your site unless you enable this.', 'ninja-accessibility' ) }
 					/>
 				</BlockStack>
 			</SettingsField>
 
-			{ /* @fs_premium_only */ }
-			{ /* Pro-only general settings. */ }
-			{ /* @end_fs_premium_only */ }
+			{}
 		</PageContainer>
 	);
 }

@@ -74,6 +74,7 @@ class Input_Validator {
 		'pause_animation'            => 'bool',
 		'mute_sounds'                => 'bool',
 		'reading_line'               => 'bool',
+		'outline_focus'              => 'bool',
 		'grey_scale'                 => 'bool',
 		'contrast'                   => 'bool',
 		'invert_color'               => 'bool',
@@ -90,7 +91,7 @@ class Input_Validator {
 		'cursor_size'                => 'posint',
 		'apply_cursor'               => 'apply',
 		'cursor_effect_type'         => 'effect',
-		'cursor_css_selectors'       => 'selector',
+				'cursor_css_selectors'       => 'selector',
 		'hide_cursor_on_mobile'      => 'bool',
 
 		// Accessibility statement.
@@ -256,6 +257,7 @@ class Input_Validator {
 				$val = sanitize_text_field( (string) $value );
 				return in_array( $val, self::EFFECT_VALUES, true ) ? $val : 'none';
 
+			
 			case 'apply':
 				$val = sanitize_text_field( (string) $value );
 				if ( in_array( $val, self::APPLY_VALUES, true ) ) {

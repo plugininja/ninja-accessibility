@@ -112,12 +112,15 @@ function pnpna_default_settings(): array {
 		'pause_animation'            => '1',
 		'mute_sounds'                => '1',
 		'reading_line'               => '1',
+		'outline_focus'              => '1',
 		'grey_scale'                 => '1',
 		'contrast'                   => '1',
 		'invert_color'               => '1',
 		'brightness'                 => '1',
 		'saturation'                 => '1',
-		'show_branding'              => '1',
+		// Off by default — WP.org Guideline 10: no external links/credits
+		// on the public site without explicit admin opt-in.
+		'show_branding'              => '0',
 		'skip_main_content'          => '1',
 	);
 
@@ -129,7 +132,7 @@ function pnpna_default_settings(): array {
 		'cursor_size'                => '20',
 		'apply_cursor'               => 'entire_website',
 		'cursor_effect_type'         => 'none',
-		'cursor_css_selectors'       => '',
+				'cursor_css_selectors'       => '',
 		'hide_cursor_on_mobile'      => '1',
 	);
 

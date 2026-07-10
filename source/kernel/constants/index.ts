@@ -44,10 +44,7 @@ export const SETTINGS_MENU: MenuItem[] = [
 		icon: 'mouse',
 		desc: __( 'Enable options to adjust cursor size, color, and highlight for better visibility.', 'ninja-accessibility' ),
 	},
-	/* <fs_premium_only> */
-	// Pro menu items.
-	/* </fs_premium_only> */
-];
+	];
 
 export const DEFAULT_MENU_KEY = 'general';
 

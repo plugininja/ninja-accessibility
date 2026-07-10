@@ -20,6 +20,8 @@ export interface PnpnaLocalizedData {
 	// Frontend-only extras (inlined so the widget needs no HTTP request).
 	activeElements?: FeatureKey[];
 	cursorEffect?: string;
+	cursorEmoji?: string;
+	fairyDustColors?: string[];
 	statementUrl?: string;
 	showBranding?: boolean;
 	/** Default widget language (visitor override is stored in localStorage). */

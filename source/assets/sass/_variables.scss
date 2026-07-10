@@ -81,10 +81,12 @@ $transition-base:   200ms ease;
 $transition-slow:   300ms ease;
 
 // ─── Z-index ──────────────────────────────────────────────────────────────────
-$z-widget:  99998;
-$z-panel:   99999;
+// Widget/panel sit ABOVE the overlays (reading mask / reading line) so the
+// plugin UI is never dimmed or covered by its own page-level features.
 $z-overlay: 100000;
-$z-tooltip: 100001;
+$z-widget:  100002;
+$z-panel:   100003;
+$z-tooltip: 100005;
 
 // ─── Breakpoints ──────────────────────────────────────────────────────────────
 $bp-phone:  480px;

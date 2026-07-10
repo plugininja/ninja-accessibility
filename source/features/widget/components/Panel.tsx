@@ -1,47 +1,43 @@
 /**
- * Frontend accessibility panel — "Accessibility Adjustments" dialog with a
- * header action bar (Reset / Statement / Hide Interface + language picker),
- * stepper cards for multi-step adjustments, toggle cards for on/off features,
- * and a branding footer. Visitor-selectable language via bundled translations.
+ * Frontend accessibility panel — accessiy design:
+ * teal header (title, language picker, reset / hide / close actions),
+ * CONTENT and COLOR section pills, a flat 3-column tile grid where
+ * multi-step features cycle and show their current value, and a teal
+ * footer with the accessibility-statement link and (opt-in) attribution.
  */
 
 import { useEffect, useRef, useState } from "@wordpress/element";
-import { useWidgetNotifications } from "~/features/widget/hooks";
 import useTranslation, {
     Translator,
 } from "~/features/widget/i18n/useTranslation";
+import LanguageSelector from "~/features/widget/components/LanguageSelector";
 import {
     resetAllFeatures,
     selectActiveFeatures,
     selectEnabledFeatures,
     selectIsOpen,
+    selectLanguage,
     setFeatureStep,
+    setLanguage,
 } from "~/features/widget/state/widgetSlice";
+import { setStoredLanguage } from "~/features/widget/utils/storage";
 import { STEP_COUNTS } from "~/features/widget/utils/accessibility";
 import { useWidgetDispatch, useWidgetSelector } from "~/kernel/store/hooks";
+import type { LanguageKey } from "~/features/widget/i18n/languages";
 import type { FeatureKey } from "~/kernel/types/widget";
 
-// ─── Feature metadata (labels are translation keys) ──────────────────────────
+// ─── Tile metadata (labels/values are translation keys where possible) ───────
 
-interface StepperMeta {
+interface TileMeta {
     key: FeatureKey;
     labelKey: string;
     icon: string;
-    /** Display value per step; index 0 is the "off" label. */
-    values: string[];
+    /** Display value per step for multi-step features; index 0 is "off". */
+    values?: string[];
 }
 
-interface ToggleMeta {
-    key: FeatureKey;
-    labelKey: string;
-    icon: string;
-    /** For text-align style groups: the fixed step this card sets. */
-    fixedStep?: number;
-}
-
-// ─── Vision tab ──────────────────────────────────────────────────────────────────
-
-const VISION_STEPPERS: StepperMeta[] = [
+// Order follows the accessiy Figma panel.
+const CONTENT_TILES: TileMeta[] = [
     {
         key: "content_scaling",
         labelKey: "ContentScaling",
@@ -50,178 +46,101 @@ const VISION_STEPPERS: StepperMeta[] = [
     },
     {
         key: "bigger_text",
-        labelKey: "AdjustFontSizing",
+        labelKey: "TextSize",
         icon: "format_size",
-        values: ["Default", "110%", "120%", "130%", "140%"],
+        values: ["Default", "1.1x", "1.2x", "1.3x", "1.4x"],
     },
     {
         key: "bigger_line_height",
         labelKey: "AdjustLineHeight",
         icon: "format_line_spacing",
-        values: ["Default", "1.5", "1.8", "2.1", "2.4"],
+        values: ["Default", "1.5x", "1.8x", "2.1x", "2.4x"],
     },
     {
         key: "letter_spacing",
-        labelKey: "AdjustLetterSpacing",
+        labelKey: "LetterSpacing",
         icon: "format_letter_spacing",
         values: ["Default", "1px", "2px", "3px", "4px"],
     },
-];
-
-const VISION_TOGGLES: ToggleMeta[] = [
-    { key: "readable_font", labelKey: "ReadableFont", icon: "font_download" },
-    { key: "contrast", labelKey: "Contrast", icon: "contrast" },
-    { key: "brightness", labelKey: "Brightness", icon: "brightness_high" },
-    { key: "saturation", labelKey: "Saturation", icon: "water_drop" },
-    { key: "grey_scale", labelKey: "GreyScale", icon: "invert_colors_off" },
-    { key: "invert_color", labelKey: "InvertColor", icon: "invert_colors" },
-    { key: "hide_images", labelKey: "HideImages", icon: "image_not_supported" },
-];
-
-// ─── Cognitive tab ──────────────────────────────────────────────────────────────
-
-const COGNITIVE_TOGGLES: ToggleMeta[] = [
     {
         key: "text_align",
-        labelKey: "AlignCenter",
-        icon: "format_align_center",
-        fixedStep: 1,
-    },
-    {
-        key: "text_align",
-        labelKey: "AlignLeft",
+        labelKey: "TextAlign",
         icon: "format_align_left",
-        fixedStep: 2,
+        values: ["Default", "Center", "Left", "Right"],
     },
-    {
-        key: "text_align",
-        labelKey: "AlignRight",
-        icon: "format_align_right",
-        fixedStep: 3,
-    },
-    { key: "highlight_links", labelKey: "HighlightLinks", icon: "link" },
+    { key: "readable_font", labelKey: "ReadableFont", icon: "font_download" },
     { key: "text_magnifier", labelKey: "TextMagnifier", icon: "zoom_in" },
-    { key: "reading_line", labelKey: "ReadingLine", icon: "horizontal_rule" },
-    { key: "reading_mask", labelKey: "ReadingMask", icon: "view_agenda" },
+    { key: "highlight_links", labelKey: "HighlightLinks", icon: "link" },
+    {
+        key: "cursor",
+        labelKey: "CustomCursor",
+        icon: "mouse",
+        values: ["Default", "1x", "2x", "3x", "4x"],
+    },
     { key: "page_structure", labelKey: "PageStructure", icon: "account_tree" },
-    { key: "sitemap", labelKey: "Sitemap", icon: "map" },
-];
-
-// ─── Motor tab ──────────────────────────────────────────────────────────────────
-
-const MOTOR_TOGGLES: ToggleMeta[] = [
-    { key: "cursor", labelKey: "CustomCursor", icon: "mouse" },
     {
         key: "screen_reader",
         labelKey: "ScreenReader",
         icon: "record_voice_over",
     },
+    { key: "reading_mask", labelKey: "ReadingMask", icon: "view_agenda" },
+    { key: "sitemap", labelKey: "Sitemap", icon: "map" },
+    { key: "hide_images", labelKey: "HideImages", icon: "image_not_supported" },
     {
         key: "pause_animation",
         labelKey: "PauseAnimation",
         icon: "motion_photos_paused",
     },
     { key: "mute_sounds", labelKey: "MuteSounds", icon: "volume_off" },
+    { key: "reading_line", labelKey: "ReadingLine", icon: "horizontal_rule" },
+    {
+        key: "outline_focus",
+        labelKey: "OutlineFocus",
+        icon: "center_focus_strong",
+    },
 ];
 
-type TabKey = "vision" | "cognitive" | "motor";
+const COLOR_TILES: TileMeta[] = [
+    { key: "grey_scale", labelKey: "GreyScale", icon: "invert_colors_off" },
+    { key: "contrast", labelKey: "Contrast", icon: "contrast" },
+    { key: "invert_color", labelKey: "InvertColor", icon: "invert_colors" },
+    {
+        key: "brightness",
+        labelKey: "Brightness",
+        icon: "brightness_high",
+        values: ["Default", "Low", "Bright", "Dark"],
+    },
+    {
+        key: "saturation",
+        labelKey: "Saturation",
+        icon: "water_drop",
+        values: ["Default", "Low", "High", "Off"],
+    },
+];
 
-// ─── Cards ────────────────────────────────────────────────────────────────────
+// ─── Tile ─────────────────────────────────────────────────────────────────────
 
-function StepperCard({
+function Tile({
     meta,
     step,
     t,
     onStep,
 }: {
-    meta: StepperMeta;
+    meta: TileMeta;
     step: number;
     t: Translator;
     onStep: (key: FeatureKey, step: number) => void;
 }) {
     const max = STEP_COUNTS[meta.key];
+    const active = step > 0;
     const value =
-        0 === step ? t("Default") : meta.values[step] || meta.values[0];
-
-    return (
-        <div
-            className={
-                "pnpna-stepper" + (step > 0 ? " pnpna-stepper--active" : "")
-            }
-        >
-            <div className="pnpna-stepper__title">
-                <span className="material-symbols-outlined" aria-hidden="true">
-                    {meta.icon}
-                </span>
-                <span>{t(meta.labelKey)}</span>
-            </div>
-            <div className="pnpna-stepper__controls">
-                <button
-                    type="button"
-                    className="pnpna-stepper__btn"
-                    disabled={0 === step}
-                    aria-label={`${t(meta.labelKey)} −`}
-                    onClick={() => onStep(meta.key, Math.max(0, step - 1))}
-                >
-                    <span
-                        className="material-symbols-outlined"
-                        aria-hidden="true"
-                    >
-                        keyboard_arrow_down
-                    </span>
-                </button>
-                <span className="pnpna-stepper__value" aria-live="polite">
-                    {value}
-                </span>
-                <button
-                    type="button"
-                    className="pnpna-stepper__btn"
-                    disabled={step >= max}
-                    aria-label={`${t(meta.labelKey)} +`}
-                    onClick={() => onStep(meta.key, Math.min(max, step + 1))}
-                >
-                    <span
-                        className="material-symbols-outlined"
-                        aria-hidden="true"
-                    >
-                        keyboard_arrow_up
-                    </span>
-                </button>
-            </div>
-        </div>
-    );
-}
-
-function ToggleCard({
-    meta,
-    step,
-    t,
-    onStep,
-}: {
-    meta: ToggleMeta;
-    step: number;
-    t: Translator;
-    onStep: (key: FeatureKey, step: number) => void;
-}) {
-    const max = STEP_COUNTS[meta.key];
-    const isFixed = "number" === typeof meta.fixedStep;
-    const active = isFixed ? step === meta.fixedStep : step > 0;
-
-    const handleClick = () => {
-        if (isFixed) {
-            // Alignment-style card: set the fixed step, or clear when re-clicked.
-            onStep(meta.key, active ? 0 : (meta.fixedStep as number));
-        } else {
-            // Cycle: off → 1 → … → max → off.
-            onStep(meta.key, (step + 1) % (max + 1));
-        }
-    };
+        meta.values && active ? t(meta.values[step] || meta.values[0]) : "";
 
     return (
         <button
             type="button"
             className={"pnpna-tile" + (active ? " pnpna-tile--active" : "")}
-            onClick={handleClick}
+            onClick={() => onStep(meta.key, (step + 1) % (max + 1))}
             aria-pressed={active}
         >
             <span
@@ -230,8 +149,16 @@ function ToggleCard({
             >
                 {meta.icon}
             </span>
-            <span className="pnpna-tile__label">{t(meta.labelKey)}</span>
-            {!isFixed && max > 1 && (
+            <span className="pnpna-tile__label">
+                {t(meta.labelKey)}
+                {value && (
+                    <span className="pnpna-tile__value" aria-live="polite">
+                        {" "}
+                        {value}
+                    </span>
+                )}
+            </span>
+            {max > 1 && (
                 <span className="pnpna-tile__dots" aria-hidden="true">
                     {Array.from({ length: max }, (_, i) => (
                         <span
@@ -257,7 +184,6 @@ interface Props {
     onFeatureStep: (key: FeatureKey, step: number) => void;
     onResetAll: () => void;
     onHideInterface: () => void;
-    onSkipToContent?: () => void;
 }
 
 export default function Panel({
@@ -267,22 +193,18 @@ export default function Panel({
     onFeatureStep,
     onResetAll,
     onHideInterface,
-    onSkipToContent,
 }: Props) {
     const dispatch = useWidgetDispatch();
     const open = useWidgetSelector(selectIsOpen);
     const activeFeatures = useWidgetSelector(selectActiveFeatures);
     const enabledFeatures = useWidgetSelector(selectEnabledFeatures);
+    const language = useWidgetSelector(selectLanguage);
     const panelRef = useRef<HTMLDivElement>(null);
     const [confirmHide, setConfirmHide] = useState(false);
-    const [activeTab, setActiveTab] = useState<TabKey>("vision");
     const t = useTranslation();
-    const {
-        notifyFeatureEnabled,
-        notifyFeatureDisabled,
-        notifyResetComplete,
-        notifyHideInterface,
-    } = useWidgetNotifications();
+
+    const statementUrl = window.pnpna?.statementUrl || "";
+    const showBranding = window.pnpna?.showBranding === true;
 
     // Escape closes; Tab is trapped inside the dialog while open.
     useEffect(() => {
@@ -331,35 +253,22 @@ export default function Panel({
     const handleStep = (key: FeatureKey, step: number) => {
         dispatch(setFeatureStep({ key, step }));
         onFeatureStep(key, step);
-
-        // Show notification for feature change
-        if (step > 0) {
-            notifyFeatureEnabled(key);
-        } else {
-            notifyFeatureDisabled(key);
-        }
     };
 
     const handleResetAll = () => {
         dispatch(resetAllFeatures());
         onResetAll();
-        notifyResetComplete();
     };
 
-    const handleHideInterfaceConfirm = () => {
-        onHideInterface();
-        notifyHideInterface();
+    const handleLanguage = (lang: LanguageKey) => {
+        dispatch(setLanguage(lang));
+        setStoredLanguage(lang);
     };
 
     const isEnabled = (key: FeatureKey) => enabledFeatures.includes(key);
 
-    // Vision tab
-    const visionSteppers = VISION_STEPPERS.filter((m) => isEnabled(m.key));
-    const visionToggles = VISION_TOGGLES.filter((m) => isEnabled(m.key));
-    // Cognitive tab
-    const cognitiveToggles = COGNITIVE_TOGGLES.filter((m) => isEnabled(m.key));
-    // Motor tab
-    const motorToggles = MOTOR_TOGGLES.filter((m) => isEnabled(m.key));
+    const contentTiles = CONTENT_TILES.filter((m) => isEnabled(m.key));
+    const colorTiles = COLOR_TILES.filter((m) => isEnabled(m.key));
 
     let panelClass = "pnpna-panel";
     if (open) {
@@ -381,147 +290,137 @@ export default function Panel({
             aria-label={t("AccessibilityAdjustments")}
             hidden={!open}
         >
-            {/* Top bar */}
+            {/* Header (teal) */}
             <div className="pnpna-panel__topbar">
-                <span className="pnpna-panel__topbar-logo">
-                    {t("PlugininjaAccessibility")}
+                <span className="pnpna-panel__topbar-title">
+                    {t("Accessibility")}
                 </span>
-                <button
-                    type="button"
-                    className="pnpna-panel__topbar-skip"
-                    onClick={() => {
-                        onSkipToContent?.();
-                        onClose();
-                    }}
-                >
-                    {t("SkipToContent")}
-                </button>
-            </div>
-
-            {/* Tab navigation */}
-            <div className="pnpna-panel__tabs" role="tablist">
-                {(
-                    [
-                        { key: "vision", label: t("Vision") },
-                        { key: "cognitive", label: t("Cognitive") },
-                        { key: "motor", label: t("Motor") },
-                    ] as { key: TabKey; label: string }[]
-                ).map((tab) => (
+                <div className="pnpna-panel__topbar-actions">
+                    <LanguageSelector
+                        selected={language}
+                        onChange={handleLanguage}
+                    />
                     <button
-                        key={tab.key}
                         type="button"
-                        role="tab"
-                        aria-selected={activeTab === tab.key}
-                        className={
-                            "pnpna-panel__tab" +
-                            (activeTab === tab.key
-                                ? " pnpna-panel__tab--active"
-                                : "")
-                        }
-                        onClick={() => setActiveTab(tab.key)}
+                        className="pnpna-panel__topbar-btn"
+                        onClick={handleResetAll}
+                        aria-label={t("ResetSettings")}
+                        title={t("ResetSettings")}
                     >
-                        {tab.label}
+                        <span
+                            className="material-symbols-outlined"
+                            aria-hidden="true"
+                        >
+                            restart_alt
+                        </span>
                     </button>
-                ))}
+                    <button
+                        type="button"
+                        className="pnpna-panel__topbar-btn"
+                        onClick={() => setConfirmHide(true)}
+                        aria-label={t("HideInterface")}
+                        title={t("HideInterface")}
+                    >
+                        <span
+                            className="material-symbols-outlined"
+                            aria-hidden="true"
+                        >
+                            visibility_off
+                        </span>
+                    </button>
+                    <button
+                        type="button"
+                        className="pnpna-panel__topbar-btn"
+                        onClick={onClose}
+                        aria-label={t("Close")}
+                        title={t("Close")}
+                    >
+                        <span
+                            className="material-symbols-outlined"
+                            aria-hidden="true"
+                        >
+                            close
+                        </span>
+                    </button>
+                </div>
             </div>
 
             {/* Scrollable body */}
-            <div
-                className={`pnpna-panel__body pnpna-panel__body--${activeTab}`}
-                role="tabpanel"
-            >
-                {activeTab === "vision" && (
+            <div className="pnpna-panel__body">
+                {contentTiles.length > 0 && (
                     <>
-                        {visionSteppers.length > 0 && (
-                            <div className="pnpna-panel__steppers">
-                                {visionSteppers.map((m) => (
-                                    <StepperCard
-                                        key={m.key}
-                                        meta={m}
-                                        step={stepOf(m.key)}
-                                        t={t}
-                                        onStep={handleStep}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                        {visionToggles.length > 0 && (
-                            <div className="pnpna-panel__tile-grid">
-                                {visionToggles.map((m) => (
-                                    <ToggleCard
-                                        key={m.key}
-                                        meta={m}
-                                        step={stepOf(m.key)}
-                                        t={t}
-                                        onStep={handleStep}
-                                    />
-                                ))}
-                            </div>
-                        )}
+                        <div className="pnpna-panel__section-pill">
+                            {t("ContentAdjustments")}
+                        </div>
+                        <div className="pnpna-panel__tile-grid">
+                            {contentTiles.map((m) => (
+                                <Tile
+                                    key={m.key}
+                                    meta={m}
+                                    step={stepOf(m.key)}
+                                    t={t}
+                                    onStep={handleStep}
+                                />
+                            ))}
+                        </div>
                     </>
                 )}
 
-                {activeTab === "cognitive" && cognitiveToggles.length > 0 && (
-                    <div className="pnpna-panel__tile-grid">
-                        {cognitiveToggles.map((m) => (
-                            <ToggleCard
-                                key={`${m.key}-${m.fixedStep ?? 0}`}
-                                meta={m}
-                                step={stepOf(m.key)}
-                                t={t}
-                                onStep={handleStep}
-                            />
-                        ))}
-                    </div>
-                )}
-
-                {activeTab === "motor" && motorToggles.length > 0 && (
-                    <div className="pnpna-panel__tile-grid">
-                        {motorToggles.map((m) => (
-                            <ToggleCard
-                                key={m.key}
-                                meta={m}
-                                step={stepOf(m.key)}
-                                t={t}
-                                onStep={handleStep}
-                            />
-                        ))}
-                    </div>
+                {colorTiles.length > 0 && (
+                    <>
+                        <div className="pnpna-panel__section-pill">
+                            {t("ColorAdjustments")}
+                        </div>
+                        <div className="pnpna-panel__tile-grid">
+                            {colorTiles.map((m) => (
+                                <Tile
+                                    key={m.key}
+                                    meta={m}
+                                    step={stepOf(m.key)}
+                                    t={t}
+                                    onStep={handleStep}
+                                />
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
 
-            {/* Bottom bar */}
-            <div className="pnpna-panel__bottombar">
-                <button
-                    type="button"
-                    className="pnpna-panel__bottombar-btn"
-                    onClick={() => setConfirmHide(true)}
-                    aria-label={t("HideInterface")}
-                >
-                    <span
-                        className="material-symbols-outlined"
-                        aria-hidden="true"
-                    >
-                        visibility_off
-                    </span>
-                </button>
-                <span className="pnpna-panel__bottombar-title">
-                    {t("AccessibilityControls")}
-                </span>
-                <button
-                    type="button"
-                    className="pnpna-panel__bottombar-btn"
-                    onClick={handleResetAll}
-                    aria-label={t("ResetSettings")}
-                >
-                    <span
-                        className="material-symbols-outlined"
-                        aria-hidden="true"
-                    >
-                        restart_alt
-                    </span>
-                </button>
-            </div>
+            {/* Footer (teal) — statement link and opt-in attribution only.
+                The attribution renders ONLY when the site admin has enabled
+                it (off by default; WP.org Guideline 10). */}
+            {(statementUrl || showBranding) && (
+                <div className="pnpna-panel__footer">
+                    {statementUrl ? (
+                        <a
+                            className="pnpna-panel__footer-statement"
+                            href={statementUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
+                            {t("AccessibilityStatement")}
+                            <span
+                                className="material-symbols-outlined"
+                                aria-hidden="true"
+                            >
+                                open_in_new
+                            </span>
+                        </a>
+                    ) : (
+                        <span />
+                    )}
+                    {showBranding && (
+                        <a
+                            className="pnpna-panel__footer-branding"
+                            href="https://plugininja.com/ninja-accessibility/"
+                            target="_blank"
+                            rel="nofollow noopener noreferrer"
+                        >
+                            {t("PoweredBy")} <strong>Ninja Accessibility</strong>
+                        </a>
+                    )}
+                </div>
+            )}
 
             {confirmHide && (
                 <div
@@ -546,8 +445,8 @@ export default function Panel({
                             </button>
                             <button
                                 type="button"
-                                className="pnpna-pill pnpna-pill--danger"
-                                onClick={handleHideInterfaceConfirm}
+                                className="pnpna-pill pnpna-pill--primary"
+                                onClick={onHideInterface}
                             >
                                 {t("Hide")}
                             </button>

@@ -82,6 +82,7 @@ export interface PluginSettings {
 	pause_animation: BoolString;
 	mute_sounds: BoolString;
 	reading_line: BoolString;
+	outline_focus: BoolString;
 	grey_scale: BoolString;
 	contrast: BoolString;
 	invert_color: BoolString;
@@ -98,6 +99,8 @@ export interface PluginSettings {
 	cursor_size: string;
 	apply_cursor: string;
 	cursor_effect_type: CursorEffect;
+	cursor_emoji?: string;
+	fairy_dust_colors?: string[];
 	cursor_css_selectors: string;
 	hide_cursor_on_mobile: BoolString;
 

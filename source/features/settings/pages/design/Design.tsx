@@ -26,12 +26,16 @@ const ICON_SIZE_OPTIONS: { value: IconSize; name: string }[] = [
 	{ value: 'pnpna-icon-lg', name: __( 'Large', 'ninja-accessibility' ) },
 ];
 
+// Built-in widget icons (accessiy icon set) — white glyph SVGs in
+// assets/images/icons/, rendered on the widget background colour.
 const BUILT_IN_ICONS = [
-	{ id: 'icon1', emoji: '♿' },
-	{ id: 'icon2', emoji: '🚶' },
-	{ id: 'icon3', emoji: '🦽' },
-	{ id: 'icon4', emoji: '🏃' },
-	{ id: 'icon5', emoji: '👁' },
+	{ id: 'icon1' },
+	{ id: 'icon2' },
+	{ id: 'icon3' },
+	{ id: 'icon4' },
+	{ id: 'icon5' },
+	{ id: 'icon6' },
+	{ id: 'icon7' },
 ];
 
 const DEVICES: { key: DeviceKey; label: string; icon: string }[] = [
@@ -78,14 +82,21 @@ export default function Design() {
 									key={ icon.id }
 									type="button"
 									className={
-										'pnpna-icon-choice' +
+										'pnpna-icon-choice pnpna-icon-choice--glyph' +
 										( iconId === icon.id ? ' pnpna-icon-choice--active' : '' )
 									}
+									style={ { background: bgColor } }
 									aria-pressed={ iconId === icon.id }
 									aria-label={ icon.id }
 									onClick={ () => update( 'widget_icon', { id: icon.id } ) }
 								>
-									<span aria-hidden="true">{ icon.emoji }</span>
+									<img
+										src={ `${ window.pnpna?.assetsUrl || '' }/images/icons/${ icon.id }.svg` }
+										alt=""
+										aria-hidden="true"
+										width={ 22 }
+										height={ 22 }
+									/>
 								</button>
 							) ) }
 						</InlineStack>

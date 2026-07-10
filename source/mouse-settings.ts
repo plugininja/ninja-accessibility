@@ -7,6 +7,7 @@
 
 function initFollowingDot(): void {
 	const dot = document.createElement( 'div' );
+	dot.className = 'pnpna-fx';
 	dot.setAttribute( 'aria-hidden', 'true' );
 	Object.assign( dot.style, {
 		position: 'fixed',
@@ -29,15 +30,13 @@ function initFollowingDot(): void {
 	} );
 }
 
+
 function initCursorEffect( effectType: string ): void {
 	switch ( effectType ) {
 		case 'followingDot':
 			initFollowingDot();
 			break;
-		/* <fs_premium_only> */
-		// Pro cursor effects.
-		/* </fs_premium_only> */
-		default:
+				default:
 			break;
 	}
 }

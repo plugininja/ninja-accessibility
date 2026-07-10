@@ -33,10 +33,7 @@ class Api_Registry {
 			'settings' => new Settings(),
 		);
 
-		// /* <fs_premium_only> */
-		// Pro-only controllers go here.
-		// /* </fs_premium_only> */
-
+		
 		/**
 		 * Filter the registered REST controllers.
 		 *

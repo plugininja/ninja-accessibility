@@ -260,9 +260,27 @@
         border-radius: var(--pnpna-radius-sm);
         cursor: pointer;
 
+        // Accessiy-style glyph tiles: white SVG glyph on the widget
+        // background colour, circular like the frontend toggle button.
+        &--glyph {
+            border-radius: 50%;
+            border-color: transparent;
+
+            img {
+                display: block;
+            }
+        }
+
         &--active {
             border-color: $primary;
             box-shadow: 0 0 0 2px $primary-light;
+        }
+
+        &--glyph.pnpna-icon-choice--active {
+            border-color: $white;
+            box-shadow:
+                0 0 0 2px $primary,
+                0 2px 6px rgba(0, 0, 0, 0.15);
         }
     }
 

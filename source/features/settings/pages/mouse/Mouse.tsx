@@ -28,13 +28,27 @@ const CURSOR_SHAPES: { id: string; inner: string }[] = [
 	{ id: 'cursor5', inner: '<circle cx="10" cy="10" r="8" fill="{c}"/>' },
 ];
 
+// File-based cursor designs (accessiy icon set) — fixed artwork, no
+// recolouring. MUST stay in sync with Mouse_Customization::FILE_SHAPES.
+const FILE_CURSORS: { id: string; file: string }[] = [
+	{ id: 'cursor6', file: 'cursor_icon6.svg' },
+	{ id: 'cursor7', file: 'cursor_icon7.svg' },
+	{ id: 'cursor8', file: 'cursor_icon8.svg' },
+	{ id: 'cursor9', file: 'cursor_icon9.svg' },
+	{ id: 'cursor10', file: 'cursor_icon10.svg' },
+];
+
+function fileCursorUrl( id: string ): string {
+	const entry = FILE_CURSORS.find( ( c ) => c.id === id );
+	return entry
+		? `${ window.pnpna?.assetsUrl || '' }/images/icons/${ entry.file }`
+		: '';
+}
+
 const CURSOR_EFFECTS = [
 	{ value: 'none', name: __( 'None', 'ninja-accessibility' ) },
 	{ value: 'followingDot', name: __( 'Following Dot', 'ninja-accessibility' ) },
-	/* <fs_premium_only> */
-	// Pro cursor effects.
-	/* </fs_premium_only> */
-];
+	];
 
 const ICON_TYPES = [
 	{ value: 'icon', name: __( 'Built-in Icon', 'ninja-accessibility' ) },
@@ -78,10 +92,12 @@ export default function Mouse() {
 	const effect = String( settings.cursor_effect_type || 'none' );
 
 	const previewCursor = useMemo( () => {
+		const fileUrl = fileCursorUrl( iconId );
 		const url = iconType === 'custom' && customIconUrl
 			? customIconUrl
-			: buildCursorDataUri( iconId, cursorColor, cursorSize );
-		const hotspot = Math.floor( cursorSize / 2 );
+			: fileUrl || buildCursorDataUri( iconId, cursorColor, cursorSize );
+		// Arrow-style file cursors point from the top-left corner.
+		const hotspot = fileUrl && iconType !== 'custom' ? 0 : Math.floor( cursorSize / 2 );
 		return `url("${ url }") ${ hotspot } ${ hotspot }, auto`;
 	}, [ iconType, customIconUrl, iconId, cursorColor, cursorSize ] );
 
@@ -180,6 +196,28 @@ export default function Mouse() {
 											/>
 										</button>
 									) ) }
+									{ FILE_CURSORS.map( ( cur ) => (
+										<button
+											key={ cur.id }
+											type="button"
+											role="radio"
+											aria-checked={ iconId === cur.id }
+											aria-label={ cur.id }
+											className={
+												'pnpna-cursor-grid__item' +
+												( iconId === cur.id ? ' pnpna-cursor-grid__item--active' : '' )
+											}
+											onClick={ () => update( 'cursor_icon', { id: cur.id } ) }
+										>
+											<img
+												src={ fileCursorUrl( cur.id ) }
+												alt=""
+												aria-hidden="true"
+												width={ 22 }
+												height={ 22 }
+											/>
+										</button>
+									) ) }
 								</div>
 							) }
 
@@ -249,6 +287,8 @@ export default function Mouse() {
 									}
 								/>
 							</BlockStack>
+
+							{}
 						</BlockStack>
 					</SettingsField>
 

@@ -34,6 +34,18 @@ class Mouse_Customization {
 	);
 
 	/**
+	 * File-based cursor designs (accessiy icon set) — fixed artwork shipped in
+	 * assets/images/icons/cursor_icon{N}.svg. Keyed by id => file suffix.
+	 */
+	private const FILE_SHAPES = array(
+		'cursor6'  => '6',
+		'cursor7'  => '7',
+		'cursor8'  => '8',
+		'cursor9'  => '9',
+		'cursor10' => '10',
+	);
+
+	/**
 	 * Register WordPress hooks.
 	 */
 	protected function do_hooks(): void {
@@ -71,6 +83,11 @@ class Mouse_Customization {
 
 		$size    = $this->get_cursor_size();
 		$hotspot = (int) floor( $size / 2 );
+
+		// Arrow-style file cursors point from the top-left corner.
+		if ( $this->is_file_shape() ) {
+			$hotspot = 0;
+		}
 
 		$selectors = $this->get_scope_selectors();
 		$rule      = sprintf(
@@ -125,9 +142,14 @@ class Mouse_Customization {
 			return '';
 		}
 
-		// Built-in shape rendered as an SVG data URI.
 		$shape_id = isset( $icon['id'] ) ? sanitize_key( (string) $icon['id'] ) : 'cursor1';
 
+		// File-based design (fixed artwork, no recolouring).
+		if ( isset( self::FILE_SHAPES[ $shape_id ] ) ) {
+			return esc_url( PNPNA_ASSETS . '/images/icons/cursor_icon' . self::FILE_SHAPES[ $shape_id ] . '.svg' );
+		}
+
+		// Built-in shape rendered as an SVG data URI.
 		if ( ! isset( self::SHAPES[ $shape_id ] ) ) {
 			$shape_id = 'cursor1';
 		}
@@ -149,6 +171,17 @@ class Mouse_Customization {
 		);
 
 		return 'data:image/svg+xml;charset=utf-8,' . rawurlencode( $svg );
+	}
+
+	/**
+	 * Whether the selected cursor icon is a file-based design.
+	 */
+	private function is_file_shape(): bool {
+		$icon = Helpers::get_setting( 'cursor_icon' );
+
+		return is_array( $icon )
+			&& isset( $icon['id'] )
+			&& isset( self::FILE_SHAPES[ sanitize_key( (string) $icon['id'] ) ] );
 	}
 
 	/**

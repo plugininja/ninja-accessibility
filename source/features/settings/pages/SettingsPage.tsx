@@ -15,10 +15,7 @@ const PAGES: Record<string, React.ComponentType> = {
 	capabilities: Capabilities,
 	statement: Statement,
 	mouse: Mouse,
-	/* <fs_premium_only> */
-	// Pro pages.
-	/* </fs_premium_only> */
-};
+	};
 
 export default function SettingsPage() {
 	const { menuKey } = useParams<{ menuKey: string }>();
