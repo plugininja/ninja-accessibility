@@ -15,7 +15,7 @@ const PAGES: Record<string, React.ComponentType> = {
 	capabilities: Capabilities,
 	statement: Statement,
 	mouse: Mouse,
-	};
+};
 
 export default function SettingsPage() {
 	const { menuKey } = useParams<{ menuKey: string }>();

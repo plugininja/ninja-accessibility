@@ -106,6 +106,16 @@ const languages: Record<LanguageKey, LanguageConfig> = {
                 "Simplifies layout, improves concentration",
             ADHDFriendly: "ADHD Friendly",
             ADHDFriendlyDescription: "Reduces distractions, boosts focus",
+            // ─── Accessibility profiles (other languages fall back to English) ───
+            AccessibilityProfiles: "Accessibility Profiles",
+            ColorBlind: "Color Blind",
+            ColorBlindDescription: "Strengthens colors, improves distinction",
+            LowVision: "Low Vision",
+            LowVisionDescription: "Enlarges content, improves visibility",
+            SeizureEpileptic: "Seizure & Epileptic",
+            SeizureEpilepticDescription:
+                "Stops motion, softens intense colors",
+            OversizedWidget: "Oversized Widget",
             No: "No",
             Off: "Off",
             Yes: "Yes",

@@ -41,6 +41,7 @@ function getFeatureName( featureKey: FeatureKey ): string {
         screen_reader: __( 'Screen Reader', 'ninja-accessibility' ),
         pause_animation: __( 'Pause Animations', 'ninja-accessibility' ),
         mute_sounds: __( 'Mute Sounds', 'ninja-accessibility' ),
+        outline_focus: __( 'Outline Focus', 'ninja-accessibility' ),
    };
 
     return featureNames[ featureKey ] || featureKey;

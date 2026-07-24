@@ -41,6 +41,7 @@ export interface PluginSettings {
 	// General
 	enable_widget: BoolString;
 	widget_language: string;
+	admin_theme: 'light' | 'dark';
 
 	// Design
 	icon_size: IconSize;
@@ -91,6 +92,18 @@ export interface PluginSettings {
 	show_branding: BoolString;
 	skip_main_content: BoolString;
 
+	// Accessibility profiles
+	enable_profiles: BoolString;
+	profile_motor_impaired: BoolString;
+	profile_blind: BoolString;
+	profile_color_blind: BoolString;
+	profile_dyslexia: BoolString;
+	profile_low_vision: BoolString;
+	profile_cognitive_learning: BoolString;
+	profile_seizure_epileptic: BoolString;
+	profile_adhd: BoolString;
+	oversized_widget: BoolString;
+
 	// Mouse customization
 	enable_mouse_customization: BoolString;
 	cursor_icon: IconSetting;
@@ -107,4 +120,7 @@ export interface PluginSettings {
 	// Accessibility statement
 	statement_url: string;
 	statement_page_id: string;
+
+	// Analytics (premium)
+	enable_analytics?: BoolString;
 }

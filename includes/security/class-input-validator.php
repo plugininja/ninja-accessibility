@@ -33,6 +33,7 @@ class Input_Validator {
 		// General.
 		'enable_widget'              => 'bool',
 		'widget_language'            => 'text',
+		'admin_theme'                => 'theme',
 
 		// Design.
 		'icon_size'                  => 'text',
@@ -83,6 +84,18 @@ class Input_Validator {
 		'show_branding'              => 'bool',
 		'skip_main_content'          => 'bool',
 
+		// Accessibility profiles.
+		'enable_profiles'            => 'bool',
+		'profile_motor_impaired'     => 'bool',
+		'profile_blind'              => 'bool',
+		'profile_color_blind'        => 'bool',
+		'profile_dyslexia'           => 'bool',
+		'profile_low_vision'         => 'bool',
+		'profile_cognitive_learning' => 'bool',
+		'profile_seizure_epileptic'  => 'bool',
+		'profile_adhd'               => 'bool',
+		'oversized_widget'           => 'bool',
+
 		// Mouse customization.
 		'enable_mouse_customization' => 'bool',
 		'cursor_icon'                => 'array',
@@ -91,12 +104,13 @@ class Input_Validator {
 		'cursor_size'                => 'posint',
 		'apply_cursor'               => 'apply',
 		'cursor_effect_type'         => 'effect',
-				'cursor_css_selectors'       => 'selector',
+		'cursor_css_selectors'       => 'selector',
 		'hide_cursor_on_mobile'      => 'bool',
 
 		// Accessibility statement.
 		'statement_url'              => 'exturl',
 		'statement_page_id'          => 'posint',
+
 	);
 
 	/** Allowed icon-position values. */
@@ -253,11 +267,14 @@ class Input_Validator {
 				$val = sanitize_text_field( (string) $value );
 				return in_array( $val, self::POSITION_VALUES, true ) ? $val : 'bottom-right';
 
+			case 'theme':
+				$val = sanitize_text_field( (string) $value );
+				return in_array( $val, array( 'light', 'dark' ), true ) ? $val : 'light';
+
 			case 'effect':
 				$val = sanitize_text_field( (string) $value );
 				return in_array( $val, self::EFFECT_VALUES, true ) ? $val : 'none';
 
-			
 			case 'apply':
 				$val = sanitize_text_field( (string) $value );
 				if ( in_array( $val, self::APPLY_VALUES, true ) ) {
@@ -341,10 +358,11 @@ class Input_Validator {
 						break;
 					case 'icon':
 					case 'url':
-						$str = sanitize_text_field( (string) $v );
-						$clean[ $clean_key ] = filter_var( $str, FILTER_VALIDATE_URL )
-							? ( self::is_same_site_url( $str ) ? esc_url_raw( $str ) : '' )
-							: $str;
+						// Icon URLs come from the Media Library, so they are
+						// always absolute same-site URLs — anything else
+						// (external URL, javascript:, plain text) is dropped.
+						$str = esc_url_raw( trim( (string) $v ), array( 'http', 'https' ) );
+						$clean[ $clean_key ] = ( '' !== $str && self::is_same_site_url( $str ) ) ? $str : '';
 						break;
 					default:
 						$clean[ $clean_key ] = sanitize_text_field( (string) $v );

@@ -96,7 +96,6 @@ export default function General() {
 				</BlockStack>
 			</SettingsField>
 
-			{}
 		</PageContainer>
 	);
 }

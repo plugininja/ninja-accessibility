@@ -77,125 +77,139 @@
 }
 
 // ─── Position classes (one rule per device × position combination) ─────────────
+//
+// Each device's position rules are scoped to the SAME media query that
+// controls that device's visibility (above). Without this scoping every
+// position class applies at all widths and the last one in source order
+// (phone) always wins — so a widget set to desktop top-right but with a
+// forced tablet/phone bottom position (e.g. the free plan, which locks
+// tablet/phone placement to a default) renders in the phone corner on
+// desktop, and the downward-opening panel falls off the bottom of the screen.
 #pnpna-frontend {
     // Desktop
-    &.pnpna-desktop-pos-top-left {
-        top: var(--pnpna-desktop-y);
-        left: var(--pnpna-desktop-x);
-        bottom: auto;
-        right: auto;
-    }
-    &.pnpna-desktop-pos-top-right {
-        top: var(--pnpna-desktop-y);
-        right: var(--pnpna-desktop-x);
-        bottom: auto;
-        left: auto;
-    }
-    &.pnpna-desktop-pos-bottom-left {
-        bottom: var(--pnpna-desktop-y);
-        left: var(--pnpna-desktop-x);
-        top: auto;
-        right: auto;
-    }
-    &.pnpna-desktop-pos-bottom-right {
-        bottom: var(--pnpna-desktop-y);
-        right: var(--pnpna-desktop-x);
-        top: auto;
-        left: auto;
-    }
-    &.pnpna-desktop-pos-top-center {
-        top: var(--pnpna-desktop-y);
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: auto;
-        right: auto;
-    }
-    &.pnpna-desktop-pos-bottom-center {
-        bottom: var(--pnpna-desktop-y);
-        left: 50%;
-        transform: translateX(-50%);
-        top: auto;
-        right: auto;
+    @media (min-width: #{$bp-tablet + 1}) {
+        &.pnpna-desktop-pos-top-left {
+            top: var(--pnpna-desktop-y);
+            left: var(--pnpna-desktop-x);
+            bottom: auto;
+            right: auto;
+        }
+        &.pnpna-desktop-pos-top-right {
+            top: var(--pnpna-desktop-y);
+            right: var(--pnpna-desktop-x);
+            bottom: auto;
+            left: auto;
+        }
+        &.pnpna-desktop-pos-bottom-left {
+            bottom: var(--pnpna-desktop-y);
+            left: var(--pnpna-desktop-x);
+            top: auto;
+            right: auto;
+        }
+        &.pnpna-desktop-pos-bottom-right {
+            bottom: var(--pnpna-desktop-y);
+            right: var(--pnpna-desktop-x);
+            top: auto;
+            left: auto;
+        }
+        &.pnpna-desktop-pos-top-center {
+            top: var(--pnpna-desktop-y);
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: auto;
+            right: auto;
+        }
+        &.pnpna-desktop-pos-bottom-center {
+            bottom: var(--pnpna-desktop-y);
+            left: 50%;
+            transform: translateX(-50%);
+            top: auto;
+            right: auto;
+        }
     }
 
     // Tablet
-    &.pnpna-tablet-pos-top-left {
-        top: var(--pnpna-tablet-y);
-        left: var(--pnpna-tablet-x);
-        bottom: auto;
-        right: auto;
-    }
-    &.pnpna-tablet-pos-top-right {
-        top: var(--pnpna-tablet-y);
-        right: var(--pnpna-tablet-x);
-        bottom: auto;
-        left: auto;
-    }
-    &.pnpna-tablet-pos-bottom-left {
-        bottom: var(--pnpna-tablet-y);
-        left: var(--pnpna-tablet-x);
-        top: auto;
-        right: auto;
-    }
-    &.pnpna-tablet-pos-bottom-right {
-        bottom: var(--pnpna-tablet-y);
-        right: var(--pnpna-tablet-x);
-        top: auto;
-        left: auto;
-    }
-    &.pnpna-tablet-pos-top-center {
-        top: var(--pnpna-tablet-y);
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: auto;
-        right: auto;
-    }
-    &.pnpna-tablet-pos-bottom-center {
-        bottom: var(--pnpna-tablet-y);
-        left: 50%;
-        transform: translateX(-50%);
-        top: auto;
-        right: auto;
+    @media (max-width: $bp-tablet) and (min-width: #{$bp-phone + 1}) {
+        &.pnpna-tablet-pos-top-left {
+            top: var(--pnpna-tablet-y);
+            left: var(--pnpna-tablet-x);
+            bottom: auto;
+            right: auto;
+        }
+        &.pnpna-tablet-pos-top-right {
+            top: var(--pnpna-tablet-y);
+            right: var(--pnpna-tablet-x);
+            bottom: auto;
+            left: auto;
+        }
+        &.pnpna-tablet-pos-bottom-left {
+            bottom: var(--pnpna-tablet-y);
+            left: var(--pnpna-tablet-x);
+            top: auto;
+            right: auto;
+        }
+        &.pnpna-tablet-pos-bottom-right {
+            bottom: var(--pnpna-tablet-y);
+            right: var(--pnpna-tablet-x);
+            top: auto;
+            left: auto;
+        }
+        &.pnpna-tablet-pos-top-center {
+            top: var(--pnpna-tablet-y);
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: auto;
+            right: auto;
+        }
+        &.pnpna-tablet-pos-bottom-center {
+            bottom: var(--pnpna-tablet-y);
+            left: 50%;
+            transform: translateX(-50%);
+            top: auto;
+            right: auto;
+        }
     }
 
     // Phone
-    &.pnpna-phone-pos-top-left {
-        top: var(--pnpna-phone-y);
-        left: var(--pnpna-phone-x);
-        bottom: auto;
-        right: auto;
-    }
-    &.pnpna-phone-pos-top-right {
-        top: var(--pnpna-phone-y);
-        right: var(--pnpna-phone-x);
-        bottom: auto;
-        left: auto;
-    }
-    &.pnpna-phone-pos-bottom-left {
-        bottom: var(--pnpna-phone-y);
-        left: var(--pnpna-phone-x);
-        top: auto;
-        right: auto;
-    }
-    &.pnpna-phone-pos-bottom-right {
-        bottom: var(--pnpna-phone-y);
-        right: var(--pnpna-phone-x);
-        top: auto;
-        left: auto;
-    }
-    &.pnpna-phone-pos-top-center {
-        top: var(--pnpna-phone-y);
-        left: 50%;
-        transform: translateX(-50%);
-        bottom: auto;
-        right: auto;
-    }
-    &.pnpna-phone-pos-bottom-center {
-        bottom: var(--pnpna-phone-y);
-        left: 50%;
-        transform: translateX(-50%);
-        top: auto;
-        right: auto;
+    @media (max-width: $bp-phone) {
+        &.pnpna-phone-pos-top-left {
+            top: var(--pnpna-phone-y);
+            left: var(--pnpna-phone-x);
+            bottom: auto;
+            right: auto;
+        }
+        &.pnpna-phone-pos-top-right {
+            top: var(--pnpna-phone-y);
+            right: var(--pnpna-phone-x);
+            bottom: auto;
+            left: auto;
+        }
+        &.pnpna-phone-pos-bottom-left {
+            bottom: var(--pnpna-phone-y);
+            left: var(--pnpna-phone-x);
+            top: auto;
+            right: auto;
+        }
+        &.pnpna-phone-pos-bottom-right {
+            bottom: var(--pnpna-phone-y);
+            right: var(--pnpna-phone-x);
+            top: auto;
+            left: auto;
+        }
+        &.pnpna-phone-pos-top-center {
+            top: var(--pnpna-phone-y);
+            left: 50%;
+            transform: translateX(-50%);
+            bottom: auto;
+            right: auto;
+        }
+        &.pnpna-phone-pos-bottom-center {
+            bottom: var(--pnpna-phone-y);
+            left: 50%;
+            transform: translateX(-50%);
+            top: auto;
+            right: auto;
+        }
     }
 }
 
@@ -246,11 +260,44 @@
             filter: brightness(0) invert(1);
         }
     }
+
+    // Tick badge — shown when the visitor has any accessibility setting enabled.
+    &__badge {
+        position: absolute;
+        bottom: -3px;
+        left: -3px;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        background: #2563eb;
+        border: 2px solid $color-white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+        pointer-events: none;
+        @include flex-center;
+
+        svg {
+            width: 12px;
+            height: 12px;
+            fill: $color-white;
+        }
+    }
+
+    &--sm &__badge {
+        width: 18px;
+        height: 18px;
+        bottom: -2px;
+        left: -2px;
+
+        svg {
+            width: 10px;
+            height: 10px;
+        }
+    }
 }
 
 // ─── Accessibility panel ─────────────────────────────────────────────────────
 // Design tokens from Figma (Accessiy design system)
-$pnpna-brand-primary: #003c43; // primary dark teal
+$pnpna-brand-primary: #9147FF; // primary purple
 $pnpna-brand-tint: #e3fef7; // light teal tint
 $pnpna-text-primary: #0f2e30;
 $pnpna-text-secondary: #6c8e92;
@@ -262,9 +309,9 @@ $pnpna-white: #ffffff;
     position: absolute;
     bottom: calc(100% + 12px);
     right: 0;
-    width: 360px;
+    width: 420px;
     max-width: calc(100vw - 24px);
-    max-height: min(680px, 90vh);
+    max-height: min(720px, 90vh);
     display: flex;
     flex-direction: column;
     background: $pnpna-white;
@@ -272,17 +319,29 @@ $pnpna-white: #ffffff;
     box-shadow: $shadow-xl;
     overflow: hidden;
     transform-origin: bottom right;
-    transform: scale(0.95) translateY(8px);
+    transform: scale(0.9) translateY(12px);
     opacity: 0;
+    // `visibility` keeps the closed panel out of the tab order and the
+    // accessibility tree while still allowing the open/close animation
+    // (display: none would kill the transition). Its 300ms delay hides
+    // the panel only after the fade-out has finished.
+    visibility: hidden;
     transition:
         opacity $transition-slow,
-        transform $transition-slow;
+        transform 300ms cubic-bezier(0.34, 1.4, 0.64, 1),
+        visibility 0s linear 300ms;
     pointer-events: none;
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
 
     // ─── Panel modifiers ──────────────────────────────────────────────────────
     &--open {
         transform: scale(1) translateY(0);
         opacity: 1;
+        visibility: visible;
+        transition-delay: 0s;
         pointer-events: all;
     }
 
@@ -379,11 +438,11 @@ $pnpna-white: #ffffff;
     // Section label pill (CONTENT / COLOR)
     &__section-pill {
         align-self: center;
-        padding: 5px 18px;
+        padding: 6px 20px;
         background: $pnpna-white;
         border: 1px solid $pnpna-border-light;
         border-radius: 999px;
-        font-size: 10px;
+        font-size: 11px;
         font-weight: 700;
         letter-spacing: 0.08em;
         text-transform: uppercase;
@@ -397,6 +456,55 @@ $pnpna-white: #ffffff;
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: $space-2;
+    }
+
+    // Accessibility profiles list (2 columns, UserWay style; 1 column on
+    // narrow phones so long labels never clip)
+    &__profiles {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: $space-2;
+
+        @media (max-width: 400px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    // Oversized layout — wider panel, larger tiles and type
+    &--oversized {
+        width: 560px;
+
+        .pnpna-panel__profiles {
+            gap: 10px;
+        }
+
+        .pnpna-profile {
+            min-height: 58px;
+
+            &__icon {
+                width: 38px;
+                height: 38px;
+
+                &.material-symbols-outlined {
+                    font-size: 22px;
+                }
+            }
+        }
+
+        .pnpna-tile {
+            min-height: 116px;
+            gap: 10px;
+        }
+
+        .pnpna-tile__icon.material-symbols-outlined {
+            font-size: 34px;
+        }
+
+        .pnpna-tile__label,
+        .pnpna-profile__label,
+        .pnpna-oversized__label {
+            font-size: 15px;
+        }
     }
 
     // Footer — dark teal bar: statement link + opt-in attribution
@@ -555,9 +663,9 @@ $pnpna-white: #ffffff;
     @include flex-col;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: $space-2;
     width: 100%;
-    min-height: 74px;
+    min-height: 98px;
     padding: $space-2;
     background: $pnpna-white;
     border: 1px solid $pnpna-border-light;
@@ -602,18 +710,18 @@ $pnpna-white: #ffffff;
 
     // Tile icon
     &__icon {
-        font-size: 24px;
-        color: $pnpna-text-secondary;
+        font-size: 30px;
+        color: $pnpna-text-primary;
         transition: color $transition-fast;
 
         &.material-symbols-outlined {
-            font-size: 24px;
+            font-size: 30px;
         }
     }
 
     // Tile label
     &__label {
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 500;
         color: $pnpna-text-primary;
         line-height: $line-height-tight;
@@ -627,24 +735,200 @@ $pnpna-white: #ffffff;
         white-space: nowrap;
     }
 
-    // Step dots (for multi-step toggles)
+    // Step indicator (for multi-step toggles) — short bars, UserWay style
     &__dots {
         @include flex-center;
         gap: 4px;
     }
 
-    // Individual dot
+    // Individual step bar.
+    // Solid $pnpna-text-secondary (≈3.5:1 on white) keeps the inactive
+    // bars above the WCAG 1.4.11 non-text contrast minimum of 3:1.
     &__dot {
-        width: 5px;
-        height: 5px;
-        border-radius: 50%;
-        background: rgba($pnpna-text-secondary, 0.3);
+        width: 16px;
+        height: 4px;
+        border-radius: 999px;
+        background: $pnpna-text-secondary;
         transition: background $transition-fast;
 
         &--on {
             background: $pnpna-brand-primary;
         }
     }
+}
+
+// ─── Accessibility profile row (white card, icon chip, check indicator) ───────
+.pnpna-profile {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    width: 100%;
+    min-height: 52px;
+    padding: 8px $space-2;
+    background: $pnpna-white;
+    border: 1px solid $pnpna-border-light;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: left;
+    transition:
+        border-color $transition-fast,
+        background $transition-fast;
+
+    &:hover {
+        background: $pnpna-brand-tint;
+        border-color: $pnpna-brand-primary;
+    }
+
+    &:focus-visible {
+        @include focus-ring;
+    }
+
+    // Round dark icon chip (accessiy/userway look)
+    &__icon {
+        @include flex-center;
+        flex-shrink: 0;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: $pnpna-text-primary;
+        color: $pnpna-white;
+        transition: background $transition-fast;
+
+        &.material-symbols-outlined {
+            font-size: 20px;
+        }
+    }
+
+    &__label {
+        flex: 1;
+        min-width: 0;
+        font-size: 13px;
+        font-weight: 500;
+        color: $pnpna-text-primary;
+        line-height: $line-height-tight;
+        transition: color $transition-fast;
+    }
+
+    // Solid colour keeps the state indicator ≥3:1 (WCAG 1.4.11).
+    &__check {
+        flex-shrink: 0;
+        color: $pnpna-text-secondary;
+        transition: color $transition-fast;
+
+        &.material-symbols-outlined {
+            font-size: 20px;
+        }
+    }
+
+    &--active {
+        border-color: $pnpna-brand-primary;
+        background: $pnpna-brand-tint;
+
+        .pnpna-profile__icon {
+            background: $pnpna-brand-primary;
+        }
+
+        .pnpna-profile__label {
+            color: $pnpna-brand-primary;
+            font-weight: 600;
+        }
+
+        .pnpna-profile__check {
+            color: $pnpna-brand-primary;
+        }
+    }
+}
+
+// ─── Oversized Widget row (XL badge + switch) ─────────────────────────────────
+.pnpna-oversized {
+    display: flex;
+    align-items: center;
+    gap: $space-2;
+    width: 100%;
+    min-height: 40px;
+    padding: 6px $space-2;
+    background: transparent;
+    border: none;
+    border-top: 1px solid $pnpna-border-light;
+    border-radius: 0;
+    cursor: pointer;
+    text-align: left;
+
+    &:focus-visible {
+        @include focus-ring;
+    }
+
+    &__xl {
+        flex-shrink: 0;
+        font-size: 13px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        color: $pnpna-text-primary;
+        line-height: 1;
+    }
+
+    &__label {
+        flex: 1;
+        min-width: 0;
+        font-size: 13px;
+        font-weight: 500;
+        color: $pnpna-text-primary;
+        line-height: $line-height-tight;
+    }
+
+    // Track. Solid colour keeps the off state ≥3:1 (WCAG 1.4.11).
+    &__switch {
+        flex-shrink: 0;
+        position: relative;
+        width: 38px;
+        height: 22px;
+        border-radius: 999px;
+        background: $pnpna-text-secondary;
+        transition: background $transition-fast;
+    }
+
+    // Knob
+    &__knob {
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: $pnpna-white;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+        transition: transform $transition-fast;
+    }
+
+    &--on {
+        .pnpna-oversized__switch {
+            background: $pnpna-brand-primary;
+        }
+
+        .pnpna-oversized__knob {
+            transform: translateX(16px);
+        }
+    }
+}
+
+// ─── Screen-reader-only text (profile descriptions etc.) ──────────────────────
+.pnpna-visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0);
+    clip-path: inset(50%);
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+// The panel receives programmatic focus when it opens (dialog pattern);
+// no visible ring is needed for that non-interactive container.
+.pnpna-panel:focus {
+    outline: none;
 }
 
 // ─── Pill buttons (hide prompt) ───────────────────────────────────────────────
@@ -759,7 +1043,8 @@ $pnpna-white: #ffffff;
         background: transparent;
         // Huge shadow darkens everything around the strip (the "hole" trick).
         box-shadow: 0 0 0 200vmax rgba(0, 0, 0, 0.85);
-        transition: top 60ms ease;
+        // No transition: the JS updates `top` every animation frame, so the
+        // strip must track the cursor instantly instead of easing behind it.
         pointer-events: none;
     }
 }
@@ -773,7 +1058,7 @@ $pnpna-white: #ffffff;
     z-index: $z-overlay;
     pointer-events: none;
     opacity: 0.8;
-    transition: top 60ms ease;
+    // No transition — JS updates `top` per frame so it tracks the cursor 1:1.
 }
 
 .pnpna-page-structure {
@@ -914,20 +1199,19 @@ $pnpna-exclude: ':not(#pnpna-frontend):not(#pnpna-frontend *)' +
     ':not(.pnpna-sitemap):not(.pnpna-sitemap *)' +
     ':not(.pnpna-reading-mask):not(.pnpna-reading-mask *)' +
     ':not(.pnpna-reading-line)' +
+    ':not(.pnpna-text-magnifier-lens)' +
     ':not(#pnpna-custom-cursor):not(.pnpna-fx)';
 
 // Excludes plugin UI roots among body's direct children (for filter rules).
 $pnpna-exclude-top: ':not(#pnpna-frontend):not(.pnpna-page-structure)' +
     ':not(.pnpna-sitemap):not(.pnpna-reading-mask):not(.pnpna-reading-line)' +
+    ':not(.pnpna-text-magnifier-lens)' +
     ':not(#pnpna-custom-cursor):not(.pnpna-fx)' +
     ':not(script):not(style):not(link)';
 
-// Font sizing steps (110% → 140%).
-@each $step, $scale in (1: 1.1em, 2: 1.2em, 3: 1.3em, 4: 1.4em) {
-    body.pnpna-bigger-text-#{$step} *#{$pnpna-exclude} {
-        font-size: $scale !important;
-    }
-}
+// Font sizing (Text Size) is handled in JS (utils/accessibility.ts) so it can
+// scale from each element's real size without the exponential compounding that
+// a `*` + em rule produces. No CSS rule needed here.
 
 // Line-height steps (1.5 → 2.4).
 @each $step, $lh in (1: 1.5, 2: 1.8, 3: 2.1, 4: 2.4) {
@@ -1023,6 +1307,74 @@ body.pnpna-hide-native-cursor * {
     cursor: none !important;
 }
 
+// ─── Animated ring/dot custom cursor (built-in shapes — Accessiy parity) ─────
+// Elements injected by mouse-settings.ts. The dot tracks the pointer almost
+// instantly while the ring eases behind it; on link hover JS stretches the
+// ring to wrap the link's bounding box.
+
+$pnpna-cursor-color: var(--pnpna-cursor-color, #1a1a1a);
+$pnpna-cursor-mix: color-mix(in srgb, var(--pnpna-cursor-color, #1a1a1a), transparent 80%);
+$pnpna-cursor-mix2: color-mix(in srgb, var(--pnpna-cursor-color, #1a1a1a), transparent 60%);
+$pnpna-cursor-mix3: color-mix(in srgb, var(--pnpna-cursor-color, #1a1a1a), transparent 10%);
+
+.pnpna-cursor-ring {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 28px;
+    height: 28px;
+    border: 1px solid $pnpna-cursor-color;
+    pointer-events: none;
+    border-radius: 500px;
+    z-index: 2147483647;
+    transition: all 0.2s linear;
+    transform: translate3d(-3px, -3px, 0);
+    will-change: transform, width, height;
+}
+
+.pnpna-cursor-dot {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 6px;
+    height: 6px;
+    background: $pnpna-cursor-color;
+    pointer-events: none;
+    z-index: 2147483647;
+    border-radius: 500px;
+    transition: all 0.1s linear;
+}
+
+.pnpna-cursor-wrapper--cursor2 {
+    .pnpna-cursor-ring {
+        background-color: $pnpna-cursor-mix;
+        border: none;
+    }
+}
+
+.pnpna-cursor-wrapper--cursor3 {
+    .pnpna-cursor-dot {
+        display: none;
+    }
+}
+
+.pnpna-cursor-wrapper--cursor4 {
+    .pnpna-cursor-ring {
+        background-color: $pnpna-cursor-mix3;
+    }
+}
+
+.pnpna-cursor-wrapper--cursor5 {
+    .pnpna-cursor-dot {
+        background-color: $pnpna-cursor-mix;
+    }
+
+    .pnpna-cursor-ring {
+        background-color: $pnpna-cursor-mix2;
+        border: none;
+    }
+}
+
 body.pnpna-hide-images {
     img:not(#pnpna-frontend img):not(.pnpna-page-structure img):not(
             .pnpna-sitemap img
@@ -1061,14 +1413,23 @@ body.pnpna-outline-focus {
     }
 }
 
-body.pnpna-text-magnifier {
-    *#{$pnpna-exclude} {
-        &:hover {
-            font-size: 1.5em !important;
-            background: rgba(255, 255, 0, 0.2) !important;
-            cursor: zoom-in !important;
-        }
-    }
+// Text magnifier — floating lens overlay (element injected by JS), styled to
+// match the panel's accessiy design so it reads as part of the same widget.
+.pnpna-text-magnifier-lens {
+    position: fixed;
+    z-index: $z-overlay;
+    max-width: 360px;
+    padding: 12px 16px;
+    background: $pnpna-white;
+    border: 2px solid $pnpna-brand-primary;
+    border-radius: 10px;
+    box-shadow: $shadow-xl;
+    color: $pnpna-text-primary;
+    font-size: 22px;
+    font-weight: 600;
+    line-height: 1.35;
+    pointer-events: none;
+    word-break: break-word;
 }
 
 /* ── Additions: restructure (kernel/features) ─────────────────────────── */
@@ -1084,6 +1445,20 @@ body.pnpna-text-magnifier {
     color: #fff;
 }
 
-.pnpna-panel[hidden] {
-    display: none;
+// Auto contrast (Accessiy's ccpa-darker-icon behaviour): when the widget
+// background colour is light (~80% white), flip the white glyph to dark so
+// the button stays visible.
+.pnpna-toggle-btn.pnpna-darker-icon {
+    .pnpna-toggle-btn__img {
+        filter: brightness(0);
+    }
+
+    .pnpna-toggle-btn__fallback {
+        color: #000;
+    }
+
+    &:focus-visible {
+        @include focus-ring(#000, 3px);
+    }
 }
+

@@ -58,6 +58,40 @@ function pnpna_get_template( string $slug, array $args = [], ?string $name = nul
 }
 
 /**
+ * Whether the current install can use premium code.
+ *
+ * Free builds have the Freemius check stripped and always return false.
+ *
+ * @return bool
+ */
+function pnpna_is_pro(): bool {
+	$is_pro = false;
+
+	/**
+	 * Filter the resolved premium state.
+	 *
+	 * @param bool $is_pro Whether premium code may run.
+	 */
+	return (bool) apply_filters( 'pnpna_is_pro', $is_pro );
+}
+
+/**
+ * Upgrade / pricing URL for upsell UI.
+ *
+ * Uses the Freemius in-dashboard pricing page when the SDK is loaded
+ * (premium and wporg builds); falls back to the product site otherwise.
+ *
+ * @return string
+ */
+function pnpna_upgrade_url(): string {
+	if ( function_exists( '\Pnpna\pnpna_fs' ) ) {
+		return \Pnpna\pnpna_fs()->get_upgrade_url();
+	}
+
+	return PNPNA_PLUGIN_URL;
+}
+
+/**
  * Returns the default settings for the plugin.
  *
  * @return array<string, mixed>
@@ -66,6 +100,7 @@ function pnpna_default_settings(): array {
 	$general = array(
 		'enable_widget'              => '1',
 		'widget_language'            => 'en',
+		'admin_theme'                => 'light',
 	);
 
 	$design = array(
@@ -73,7 +108,7 @@ function pnpna_default_settings(): array {
 		'widget_icon'                => array( 'id' => 'icon1' ),
 		'custom_widget_icons'        => array(),
 		'icon_corner_radius'         => '100',
-		'icon_bg_color'              => '#003C43',
+		'icon_bg_color'              => '#9147FF',
 		'show_icon_desktop'          => '1',
 		'show_icon_tablet'           => '1',
 		'show_icon_phone'            => '1',
@@ -124,6 +159,19 @@ function pnpna_default_settings(): array {
 		'skip_main_content'          => '1',
 	);
 
+	$profiles = array(
+		'enable_profiles'            => '1',
+		'profile_motor_impaired'     => '1',
+		'profile_blind'              => '1',
+		'profile_color_blind'        => '1',
+		'profile_dyslexia'           => '1',
+		'profile_low_vision'         => '1',
+		'profile_cognitive_learning' => '1',
+		'profile_seizure_epileptic'  => '1',
+		'profile_adhd'               => '1',
+		'oversized_widget'           => '1',
+	);
+
 	$mouse_customization = array(
 		'enable_mouse_customization' => '0',
 		'cursor_icon'                => array( 'id' => 'cursor1' ),
@@ -132,7 +180,7 @@ function pnpna_default_settings(): array {
 		'cursor_size'                => '20',
 		'apply_cursor'               => 'entire_website',
 		'cursor_effect_type'         => 'none',
-				'cursor_css_selectors'       => '',
+		'cursor_css_selectors'       => '',
 		'hide_cursor_on_mobile'      => '1',
 	);
 
@@ -141,5 +189,7 @@ function pnpna_default_settings(): array {
 		'statement_page_id' => '0',
 	);
 
-	return array_merge( $general, $design, $capabilities, $mouse_customization, $statement );
+	$analytics = array();
+
+	return array_merge( $general, $design, $capabilities, $profiles, $mouse_customization, $statement, $analytics );
 }

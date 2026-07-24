@@ -2,12 +2,14 @@
  * localStorage helpers for frontend accessibility widget state.
  */
 
-import type { ActiveFeatureMap, FeatureKey } from '~/kernel/types/widget';
+import type { ActiveFeatureMap, FeatureKey, ProfileKey } from '~/kernel/types/widget';
 import type { LanguageKey } from '~/features/widget/i18n/languages';
 
-const STORAGE_KEY  = 'pnpna_active';
-const LANGUAGE_KEY = 'pnpna_language';
-const HIDDEN_KEY   = 'pnpna_widget_hidden';
+const STORAGE_KEY   = 'pnpna_active';
+const LANGUAGE_KEY  = 'pnpna_language';
+const HIDDEN_KEY    = 'pnpna_widget_hidden';
+const PROFILES_KEY  = 'pnpna_profiles';
+const OVERSIZED_KEY = 'pnpna_oversized';
 
 export function getActiveFeatures(): ActiveFeatureMap {
 	try {
@@ -48,6 +50,60 @@ export function setActiveFeatures( features: ActiveFeatureMap ): void {
 export function clearActiveFeatures(): void {
 	try {
 		window.localStorage.removeItem( STORAGE_KEY );
+	} catch {
+		// Ignore.
+	}
+}
+
+// ─── Profiles ─────────────────────────────────────────────────────────────────
+
+export function getStoredProfiles(): ProfileKey[] {
+	try {
+		const raw = window.localStorage.getItem( PROFILES_KEY );
+		if ( ! raw ) {
+			return [];
+		}
+
+		const parsed = JSON.parse( raw );
+		return Array.isArray( parsed ) ? ( parsed as ProfileKey[] ) : [];
+	} catch {
+		return [];
+	}
+}
+
+export function setStoredProfiles( profiles: ProfileKey[] ): void {
+	try {
+		window.localStorage.setItem( PROFILES_KEY, JSON.stringify( profiles ) );
+	} catch {
+		// Storage unavailable.
+	}
+}
+
+export function clearStoredProfiles(): void {
+	try {
+		window.localStorage.removeItem( PROFILES_KEY );
+	} catch {
+		// Ignore.
+	}
+}
+
+// ─── Oversized widget ─────────────────────────────────────────────────────────
+
+export function isOversized(): boolean {
+	try {
+		return '1' === window.localStorage.getItem( OVERSIZED_KEY );
+	} catch {
+		return false;
+	}
+}
+
+export function setStoredOversized( oversized: boolean ): void {
+	try {
+		if ( oversized ) {
+			window.localStorage.setItem( OVERSIZED_KEY, '1' );
+		} else {
+			window.localStorage.removeItem( OVERSIZED_KEY );
+		}
 	} catch {
 		// Ignore.
 	}

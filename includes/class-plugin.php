@@ -28,6 +28,10 @@ class Plugin {
 		Admin::get_instance();
 		Api_Registry::get_instance();
 		App_Settings::get_instance();
+
+		if ( class_exists( Analytics__premium_only::class ) ) {
+			Analytics__premium_only::get_instance();
+		}
 	}
 
 	/**

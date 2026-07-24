@@ -24,13 +24,18 @@ class Mouse_Customization {
 
 	use Singleton;
 
-	/** Built-in cursor shapes (viewBox 0 0 20 20), keyed by id. */
+	/**
+	 * Built-in cursor shapes (viewBox 0 0 20 20), keyed by id.
+	 *
+	 * Artwork mirrors Accessiy's cursor_icon1–5 designs 1:1: dot-in-ring,
+	 * dot-in-translucent-circle, ring only, solid dot, offset double dot.
+	 */
 	private const SHAPES = array(
-		'cursor1' => '<circle cx="10" cy="10" r="3" fill="%1$s"/><circle cx="10" cy="10" r="8" fill="none" stroke="%1$s" stroke-width="1.5"/>',
-		'cursor2' => '<circle cx="10" cy="10" r="4" fill="none" stroke="%1$s" stroke-width="2"/>',
-		'cursor3' => '<circle cx="10" cy="10" r="9" fill="none" stroke="%1$s" stroke-width="2"/>',
+		'cursor1' => '<circle cx="10" cy="10" r="3" fill="%1$s"/><circle cx="10" cy="10" r="9" fill="none" stroke="%1$s" stroke-width="1"/>',
+		'cursor2' => '<circle cx="10" cy="10" r="10" fill="%1$s" fill-opacity="0.1"/><circle cx="10" cy="10" r="3" fill="%1$s"/>',
+		'cursor3' => '<circle cx="10" cy="10" r="9" fill="none" stroke="%1$s" stroke-width="1"/>',
 		'cursor4' => '<circle cx="10" cy="10" r="5" fill="%1$s"/>',
-		'cursor5' => '<circle cx="10" cy="10" r="8" fill="%1$s"/>',
+		'cursor5' => '<circle cx="11" cy="11" r="5" fill="%1$s" fill-opacity="0.45"/><circle cx="9" cy="9" r="5" fill="%1$s"/>',
 	);
 
 	/**
@@ -71,8 +76,26 @@ class Mouse_Customization {
 	 * Build the cursor CSS rule set (empty string = nothing to output).
 	 */
 	private function build_cursor_css(): string {
+		if ( '1' !== Helpers::get_setting( 'enable_mouse_customization', '0' ) ) {
+			return '';
+		}
+
 		if ( ! $this->applies_to_current_page() ) {
 			return '';
+		}
+
+		// Built-in circle shapes are animated (ring/dot pair injected by
+		// mouse-settings.ts) — hide the native cursor instead of replacing
+		// its image, exactly like Accessiy.
+		if ( null !== $this->get_animated_cursor_config() ) {
+			$rule = sprintf( '%s { cursor: none !important; }', $this->get_scope_selectors() );
+
+			if ( '1' === Helpers::get_setting( 'hide_cursor_on_mobile', '1' ) ) {
+				// Only apply on devices with a real pointer.
+				$rule = '@media (hover: hover) and (pointer: fine) { ' . $rule . ' }';
+			}
+
+			return $rule;
 		}
 
 		$cursor_url = $this->resolve_cursor_url();
@@ -107,6 +130,63 @@ class Mouse_Customization {
 	}
 
 	/**
+	 * Config for the animated ring/dot cursor (built-in circle shapes only).
+	 *
+	 * Returns null when the animated cursor should NOT run: feature disabled,
+	 * page out of scope, a file-based arrow design selected, or a premium
+	 * custom upload in use (those stay static CSS cursors, like Accessiy).
+	 *
+	 * @return array{shape: string, size: int, color: string}|null
+	 */
+	public function get_animated_cursor_config(): ?array {
+		if ( '1' !== Helpers::get_setting( 'enable_mouse_customization', '0' ) ) {
+			return null;
+		}
+
+		if ( ! $this->applies_to_current_page() ) {
+			return null;
+		}
+
+		$icon = Helpers::get_setting( 'cursor_icon' );
+
+		if ( ! is_array( $icon ) ) {
+			$icon = array( 'id' => 'cursor1' );
+		}
+
+		// Custom uploaded icon — premium static cursor takes precedence.
+		if ( ! empty( $icon['icon'] ) && is_string( $icon['icon'] ) ) {
+
+			// Free installs fall back to the default built-in shape.
+			$icon = array( 'id' => 'cursor1' );
+		}
+
+		$shape_id = isset( $icon['id'] ) ? sanitize_key( (string) $icon['id'] ) : 'cursor1';
+
+		// File-based arrow designs keep the static CSS cursor.
+		if ( isset( self::FILE_SHAPES[ $shape_id ] ) ) {
+			return null;
+		}
+
+		if ( ! isset( self::SHAPES[ $shape_id ] ) ) {
+			$shape_id = 'cursor1';
+		}
+
+		$color = Input_Validator::sanitize_hex_color(
+			(string) Helpers::get_setting( 'cursor_color', '#1a1a1a' )
+		);
+
+		if ( '' === $color ) {
+			$color = '#1a1a1a';
+		}
+
+		return array(
+			'shape' => $shape_id,
+			'size'  => $this->get_cursor_size(),
+			'color' => $color,
+		);
+	}
+
+	/**
 	 * Whether the cursor should be applied on the currently-viewed page.
 	 */
 	private function applies_to_current_page(): bool {
@@ -116,9 +196,8 @@ class Mouse_Customization {
 			return true;
 		}
 
-		$current_page_id = get_queried_object_id();
-
-		return $current_page_id > 0 && (string) $current_page_id === $apply;
+		// Page-scoped cursor is a premium feature — free installs apply site-wide.
+		return true;
 	}
 
 	/**
@@ -131,15 +210,11 @@ class Mouse_Customization {
 			$icon = array( 'id' => 'cursor1' );
 		}
 
-		// Custom uploaded icon (must be a same-site URL).
+		// Custom uploaded icon — premium feature (must be a same-site URL).
 		if ( ! empty( $icon['icon'] ) && is_string( $icon['icon'] ) ) {
-			$icon_url = $icon['icon'];
 
-			if ( filter_var( $icon_url, FILTER_VALIDATE_URL ) && Input_Validator::is_same_site_url( $icon_url ) ) {
-				return esc_url( $icon_url );
-			}
-
-			return '';
+			// Free installs fall back to the default built-in shape.
+			$icon = array( 'id' => 'cursor1' );
 		}
 
 		$shape_id = isset( $icon['id'] ) ? sanitize_key( (string) $icon['id'] ) : 'cursor1';

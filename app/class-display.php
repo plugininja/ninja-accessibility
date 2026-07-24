@@ -3,6 +3,7 @@ namespace Pnpna\NA\App;
 
 defined( 'ABSPATH' ) || exit( 'No direct script access allowed' );
 
+use Pnpna\NA\Security\Input_Validator;
 use Pnpna\NA\Traits\Singleton;
 use Pnpna\NA\Utils\Helpers;
 
@@ -34,7 +35,7 @@ class Display {
 	public function enqueue_frontend_styles(): void {
 		wp_enqueue_style( 'pnpna-frontend' );
 
-		$color  = Helpers::get_setting( 'icon_bg_color', '#003C43' );
+		$color  = Helpers::get_setting( 'icon_bg_color', '#9147FF' );
 		$radius = Helpers::get_setting( 'icon_corner_radius', '100' );
 
 		$primary_color = $this->resolve_primary_color( $color );
@@ -68,6 +69,11 @@ class Display {
 	private function build_exact_position_vars(): string {
 		$css = '';
 
+		// Exact positioning is a premium feature.
+		if ( ! pnpna_is_pro() ) {
+			return $css;
+		}
+
 		foreach ( array( 'desktop', 'tablet', 'phone' ) as $device ) {
 			$exact = filter_var(
 				Helpers::get_setting( "exact_position_{$device}", '0' ),
@@ -91,19 +97,50 @@ class Display {
 	 * Output the React widget mount point via the frontend template.
 	 */
 	public function render(): void {
-		$devices  = array( 'desktop', 'tablet', 'phone' );
+		$is_pro  = pnpna_is_pro();
+		$devices = array( 'desktop', 'tablet', 'phone' );
+
+		$icon = Helpers::get_setting( 'widget_icon' );
+
+		if ( is_array( $icon ) && ! empty( $icon['icon'] ) ) {
+			$icon_url = is_string( $icon['icon'] ) ? $icon['icon'] : '';
+
+			// Custom uploaded widget icon is a premium feature, and the URL
+			// must be same-site (defence in depth — mirrors the input-side
+			// validation and Mouse_Customization's output-side check).
+			if ( ! $is_pro
+				|| ! filter_var( $icon_url, FILTER_VALIDATE_URL )
+				|| ! Input_Validator::is_same_site_url( $icon_url ) ) {
+				$icon = array( 'id' => 'icon1' );
+			}
+		}
+
 		$settings = array(
-			'icon'   => Helpers::get_setting( 'widget_icon' ),
+			'icon'   => $icon,
 			'size'   => Helpers::get_setting( 'icon_size' ),
 			'color'  => Helpers::get_setting( 'icon_bg_color' ),
 			'radius' => Helpers::get_setting( 'icon_corner_radius' ),
 		);
 
+		$defaults = pnpna_default_settings();
+
 		foreach ( $devices as $device ) {
+			$position = Helpers::get_setting( "{$device}_icon_position", 'bottom-right' );
+			$exact    = Helpers::get_setting( "exact_position_{$device}", '0' );
+
+			// Tablet / phone positioning and exact placement are premium features.
+			if ( ! $is_pro ) {
+				$exact = '0';
+
+				if ( 'desktop' !== $device ) {
+					$position = $defaults[ "{$device}_icon_position" ] ?? 'bottom-right';
+				}
+			}
+
 			$settings[ $device ] = array(
 				'show_icon' => Helpers::get_setting( "show_icon_{$device}", '1' ),
-				'position'  => Helpers::get_setting( "{$device}_icon_position", 'bottom-right' ),
-				'exact'     => Helpers::get_setting( "exact_position_{$device}", '0' ),
+				'position'  => $position,
+				'exact'     => $exact,
 				'x'         => Helpers::get_setting( "exact_position_{$device}_x", '40' ),
 				'y'         => Helpers::get_setting( "exact_position_{$device}_y", '40' ),
 			);
@@ -183,7 +220,7 @@ class Display {
 	 */
 	private function resolve_primary_color( string $hex ): string {
 		if ( empty( $hex ) ) {
-			return '#003C43';
+			return '#9147FF';
 		}
 
 		$hex = ltrim( $hex, '#' );
@@ -194,7 +231,7 @@ class Display {
 
 		// Malformed value (wrong length or non-hex chars): fall back to default.
 		if ( 6 !== strlen( $hex ) || ! ctype_xdigit( $hex ) ) {
-			return '#003C43';
+			return '#9147FF';
 		}
 
 		$r         = hexdec( substr( $hex, 0, 2 ) ) / 255;

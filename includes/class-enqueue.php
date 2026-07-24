@@ -3,6 +3,7 @@ namespace Pnpna\NA;
 
 defined( 'ABSPATH' ) || exit( 'No direct script access allowed' );
 
+use Pnpna\NA\App\Mouse_Customization;
 use Pnpna\NA\Traits\Singleton;
 use Pnpna\NA\Utils\Helpers;
 
@@ -173,9 +174,12 @@ class Enqueue {
 
 		if ( $widget_on ) {
 			$this->script( 'frontend', array( 'pnpna-common' ) );
-			$this->style( 'frontend' );
 			wp_set_script_translations( 'pnpna-frontend', 'ninja-accessibility', PNPNA_PATH . 'languages' );
 		}
+
+		// The animated ring/dot cursor styles live in frontend.css, so the
+		// stylesheet is needed whenever either feature is active.
+		$this->style( 'frontend' );
 
 		if ( $cursor_on ) {
 			$this->script( 'mouse-settings', array( 'pnpna-common' ) );
@@ -211,6 +215,8 @@ class Enqueue {
 	 * @return array<string, mixed>
 	 */
 	private function get_localize_data( string $hook, string $context ): array {
+		$is_pro = pnpna_is_pro();
+
 		$data = array(
 			'restUrl'    => esc_url_raw( rest_url( PNPNA_REST_NAMESPACE . '/' ) ),
 			'nonce'      => wp_create_nonce( 'wp_rest' ),
@@ -220,16 +226,28 @@ class Enqueue {
 			'version'    => PNPNA_VERSION,
 			'pluginName' => PNPNA_NAME,
 			'isAdmin'    => is_admin(),
-			'isPro'      => false,
-			'is_pro'     => false,
+			'isPro'      => $is_pro,
+			'is_pro'     => $is_pro,
+			'upgradeUrl' => esc_url( pnpna_upgrade_url() ),
 		);
 
 		if ( 'frontend' === $context ) {
 			// Inline everything the widget needs — no HTTP round-trip and it
 			// works for logged-out visitors (no REST nonce required).
 			$data['activeElements'] = Helpers::get_active_elements();
-			$data['cursorEffect']   = (string) Helpers::get_setting( 'cursor_effect_type', 'none' );
-						$data['statementUrl']   = esc_url( (string) Helpers::get_setting( 'statement_url', '' ) );
+
+			// Accessibility profiles offered in the widget panel.
+			$data['activeProfiles']  = Helpers::get_active_profiles();
+			$data['oversizedWidget'] = '1' === Helpers::get_setting( 'oversized_widget', '1' );
+
+			// Cursor effects are a premium feature — free builds always run 'none'.
+			$cursor_effect = 'none';
+
+			$data['cursorEffect'] = $cursor_effect;
+
+			// Animated ring/dot cursor for built-in shapes (null = static/off).
+			$data['customCursor'] = Mouse_Customization::get_instance()->get_animated_cursor_config();
+			$data['statementUrl']   = esc_url( (string) Helpers::get_setting( 'statement_url', '' ) );
 			$data['showBranding']   = '1' === Helpers::get_setting( 'show_branding', '0' );
 			$data['language']       = sanitize_key( (string) Helpers::get_setting( 'widget_language', 'en' ) );
 			// The frontend never talks to the REST API; do not expose a nonce.

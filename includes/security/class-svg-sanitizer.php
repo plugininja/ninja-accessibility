@@ -11,10 +11,50 @@ use Pnpna\NA\Traits\Singleton;
  * SVG uploads are disabled by default in WordPress because they can contain
  * arbitrary JavaScript. This class strips dangerous elements and attributes
  * before allowing SVGs to be saved to the Media Library.
+ *
+ * Hardening notes:
+ *  - Elements and attributes are matched by LOCAL name + namespace, never by
+ *    qualified/tag name, so prefix tricks (<x:script>, l:href) cannot bypass
+ *    the filter.
+ *  - Everything outside the SVG namespace (e.g. smuggled XHTML) is removed,
+ *    including <foreignObject> content.
+ *  - SMIL animation elements may not retarget href attributes.
+ *  - Processing instructions (xml-stylesheet) and comments are removed.
+ *  - DOCTYPE / ENTITY declarations are rejected outright (XXE).
+ *  - File size is capped, including the decompressed size of .svgz uploads
+ *    (decompression-bomb guard).
  */
 class Svg_Sanitizer {
 
 	use Singleton;
+
+	private const SVG_NS = 'http://www.w3.org/2000/svg';
+
+	/**
+	 * Disallowed element local names (lower-case).
+	 *
+	 * foreignObject is blocked because it embeds arbitrary non-SVG content;
+	 * base/meta/link can retarget or pull external resources when the SVG is
+	 * opened as a document.
+	 */
+	private const BLOCKED_ELEMENTS = array(
+		'script', 'object', 'embed', 'iframe', 'applet',
+		'form', 'input', 'button', 'textarea',
+		'foreignobject', 'base', 'meta', 'link',
+	);
+
+	/**
+	 * Link/resource attribute local names that are stripped everywhere
+	 * (with a single exception for fragment-only <use href="#…">).
+	 */
+	private const BLOCKED_ATTRS = array( 'href', 'src', 'action', 'formaction' );
+
+	/**
+	 * SMIL animation element local names whose attributeName may not
+	 * reference href (classic `<set attributeName="href" to="javascript:…">`
+	 * bypass).
+	 */
+	private const SMIL_ELEMENTS = array( 'animate', 'set', 'animatemotion', 'animatetransform' );
 
 	/**
 	 * Register WordPress hooks.
@@ -72,13 +112,19 @@ class Svg_Sanitizer {
 			return $file;
 		}
 
+		$max_bytes = $this->get_max_filesize();
+		$raw_size  = filesize( $tmp );
+
+		if ( false === $raw_size || $raw_size > $max_bytes ) {
+			$file['error'] = __( 'This SVG file exceeds the maximum allowed size and was rejected.', 'ninja-accessibility' );
+			return $file;
+		}
+
 		$contents = file_get_contents( $tmp );// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
 
-		// .svgz is gzip-compressed SVG — decompress before sanitising.
-		if ( 'svgz' === $ext && is_string( $contents ) ) {
-			$contents = ( 0 === strncmp( $contents, "\x1f\x8b", 2 ) && function_exists( 'gzdecode' ) )
-				? gzdecode( $contents )
-				: false;
+		// .svgz is gzip-compressed SVG — decompress (size-capped) before sanitising.
+		if ( 'svgz' === $ext ) {
+			$contents = is_string( $contents ) ? $this->decompress_svgz( $contents, $max_bytes ) : false;
 		}
 
 		$sanitised = $this->sanitize_svg_content( $contents );
@@ -168,13 +214,59 @@ class Svg_Sanitizer {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Maximum allowed SVG size in bytes (raw file and decompressed .svgz).
+	 *
+	 * @return int
+	 */
+	private function get_max_filesize(): int {
+		/**
+		 * Filters the maximum allowed SVG upload size in bytes.
+		 *
+		 * Applies to the raw file and to the decompressed content of .svgz
+		 * uploads. Default 2 MB — far above any real icon.
+		 *
+		 * @param int $max_bytes Maximum size in bytes.
+		 */
+		$max = (int) apply_filters( 'pnpna_svg_max_filesize', 2 * 1024 * 1024 );
+
+		return $max > 0 ? $max : 2 * 1024 * 1024;
+	}
+
+	/**
+	 * Decompress .svgz content with a hard output cap.
+	 *
+	 * @param string $contents  Raw gzip data.
+	 * @param int    $max_bytes Maximum allowed decompressed size.
+	 * @return string|false Decompressed SVG, or false on failure/oversize.
+	 */
+	private function decompress_svgz( string $contents, int $max_bytes ) {
+		if ( 0 !== strncmp( $contents, "\x1f\x8b", 2 ) || ! function_exists( 'gzdecode' ) ) {
+			return false;
+		}
+
+		/*
+		 * Cap the decoded output so a small crafted archive cannot expand
+		 * into hundreds of megabytes (decompression bomb). Corrupt gzip data
+		 * emits a PHP warning, hence the suppression.
+		 */
+		// phpcs:ignore Generic.PHP.NoSilencedErrors.Discouraged, WordPress.PHP.NoSilencedErrors.Discouraged
+		$decoded = @gzdecode( $contents, $max_bytes + 1 );
+
+		if ( ! is_string( $decoded ) || strlen( $decoded ) > $max_bytes ) {
+			return false;
+		}
+
+		return $decoded;
+	}
+
+	/**
 	 * Strip disallowed elements and attributes from SVG markup.
 	 *
 	 * @param string|false $svg Raw SVG content.
 	 * @return string|false Sanitised SVG, or false on failure.
 	 */
 	private function sanitize_svg_content( $svg ) {
-		if ( false === $svg || '' === trim( $svg ) ) {
+		if ( ! is_string( $svg ) || '' === trim( $svg ) ) {
 			return false;
 		}
 
@@ -202,57 +294,29 @@ class Svg_Sanitizer {
 			return false;
 		}
 
-		// Disallowed element names (case-insensitive match via strtolower below).
-		$blocked_elements = array(
-			'script', 'object', 'embed', 'iframe', 'applet',
-			'form', 'input', 'button', 'textarea',
-		);
+		// The document root must be <svg> in the SVG namespace — anything
+		// else (e.g. an XHTML document renamed to .svg) is rejected.
+		$root = $dom->documentElement;
 
-		// Disallowed attribute prefixes / names.
-		$blocked_attr_prefixes = array( 'on' );  // onload, onclick, etc.
-		$blocked_attrs         = array( 'href', 'xlink:href', 'src', 'action', 'formaction' );
+		if ( ! $root instanceof \DOMElement
+			|| 'svg' !== strtolower( (string) $root->localName )
+			|| self::SVG_NS !== $root->namespaceURI ) {
+			return false;
+		}
 
-		$elements = $dom->getElementsByTagName( '*' );
+		// An xml-stylesheet processing instruction can pull external XSLT
+		// (which may generate script); comments are removed as inert clutter.
+		$this->remove_pis_and_comments( $dom );
+
 		$to_remove = array();
 
-		foreach ( $elements as $element ) {
-			if ( in_array( strtolower( $element->tagName ), $blocked_elements, true ) ) {
+		foreach ( $dom->getElementsByTagName( '*' ) as $element ) {
+			if ( $this->is_blocked_element( $element ) ) {
 				$to_remove[] = $element;
 				continue;
 			}
 
-			$attrs_to_remove = array();
-
-			// Iterate via a snapshot array because the live NamedNodeMap changes.
-			if ( $element->hasAttributes() ) {
-				for ( $i = 0; $i < $element->attributes->length; $i++ ) {
-					$attr      = $element->attributes->item( $i );
-					$attr_name = strtolower( $attr->nodeName );
-
-					// Block event handlers (on*) and dangerous href/src.
-					foreach ( $blocked_attr_prefixes as $prefix ) {
-						if ( 0 === strpos( $attr_name, $prefix ) ) {
-							$attrs_to_remove[] = $attr->nodeName;
-						}
-					}
-
-					if ( in_array( $attr_name, $blocked_attrs, true ) ) {
-						// Allow xlink:href for SVG <use> references only.
-						if ( 'xlink:href' === $attr_name && 'use' === strtolower( $element->tagName ) ) {
-							// Only allow fragment references (e.g. #icon).
-							if ( 0 !== strpos( $attr->nodeValue, '#' ) ) {
-								$attrs_to_remove[] = $attr->nodeName;
-							}
-						} else {
-							$attrs_to_remove[] = $attr->nodeName;
-						}
-					}
-				}
-			}
-
-			foreach ( $attrs_to_remove as $attr_name ) {
-				$element->removeAttribute( $attr_name );
-			}
+			$this->sanitize_element_attributes( $element );
 		}
 
 		foreach ( $to_remove as $element ) {
@@ -264,5 +328,151 @@ class Svg_Sanitizer {
 		$result = $dom->saveXML();
 
 		return false === $result ? false : $result;
+	}
+
+	/**
+	 * Whether an element must be removed entirely (subtree included).
+	 *
+	 * @param \DOMElement $element Element under inspection.
+	 * @return bool
+	 */
+	private function is_blocked_element( \DOMElement $element ): bool {
+		/*
+		 * Anything outside the SVG namespace is removed wholesale. This kills
+		 * smuggled XHTML — e.g. <x:script xmlns:x="http://www.w3.org/1999/xhtml">
+		 * — which a tag-name blocklist would miss because its tagName is
+		 * "x:script", not "script".
+		 */
+		if ( self::SVG_NS !== $element->namespaceURI ) {
+			return true;
+		}
+
+		$local = strtolower( (string) $element->localName );
+
+		if ( in_array( $local, self::BLOCKED_ELEMENTS, true ) ) {
+			return true;
+		}
+
+		// SMIL may not animate link targets:
+		// <set attributeName="href" to="javascript:…"> on an <a>.
+		if ( in_array( $local, self::SMIL_ELEMENTS, true ) ) {
+			$target = strtolower( $element->getAttribute( 'attributeName' ) );
+
+			if ( false !== strpos( $target, 'href' ) ) {
+				return true;
+			}
+		}
+
+		// <style> content may not reference external resources or hide
+		// payloads behind CSS escapes.
+		if ( 'style' === $local && $this->has_dangerous_css( (string) $element->textContent ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Remove blocked attributes from a single element.
+	 *
+	 * Attributes are matched by LOCAL name so namespace-prefix tricks
+	 * (xlink:href, l:href with xmlns:l bound to xlink, …) cannot slip
+	 * through, and removed via removeAttributeNode(), which is reliable for
+	 * namespaced attributes where removeAttribute() is not.
+	 *
+	 * @param \DOMElement $element Element under inspection.
+	 */
+	private function sanitize_element_attributes( \DOMElement $element ): void {
+		if ( ! $element->hasAttributes() ) {
+			return;
+		}
+
+		$remove = array();
+
+		foreach ( $element->attributes as $attr ) {
+			if ( $this->is_blocked_attribute( $element, $attr ) ) {
+				$remove[] = $attr;
+			}
+		}
+
+		foreach ( $remove as $attr ) {
+			$element->removeAttributeNode( $attr );
+		}
+	}
+
+	/**
+	 * Whether a single attribute must be stripped.
+	 *
+	 * @param \DOMElement $element Owning element.
+	 * @param \DOMAttr    $attr    Attribute under inspection.
+	 * @return bool
+	 */
+	private function is_blocked_attribute( \DOMElement $element, \DOMAttr $attr ): bool {
+		$local = strtolower( (string) ( $attr->localName ?? $attr->nodeName ) );
+
+		// Event handlers: onload, onclick, onbegin, …
+		if ( 0 === strpos( $local, 'on' ) ) {
+			return true;
+		}
+
+		if ( in_array( $local, self::BLOCKED_ATTRS, true ) ) {
+			// Single exception: <use> may keep same-document fragment
+			// references (href="#icon" / xlink:href="#icon").
+			if ( 'href' === $local
+				&& 'use' === strtolower( (string) $element->localName )
+				&& 0 === strpos( trim( (string) $attr->nodeValue ), '#' ) ) {
+				return false;
+			}
+
+			return true;
+		}
+
+		// Inline style may not reference external resources.
+		if ( 'style' === $local && $this->has_dangerous_css( (string) $attr->nodeValue ) ) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Whether CSS content contains constructs that can pull external
+	 * resources or obfuscate a payload.
+	 *
+	 * Backslashes are rejected because CSS escapes (`\75 rl(…)` = `url(…)`)
+	 * would otherwise defeat the keyword checks. Legit icon styling never
+	 * needs them.
+	 *
+	 * @param string $css CSS text (rule block or style attribute value).
+	 * @return bool
+	 */
+	private function has_dangerous_css( string $css ): bool {
+		return (bool) preg_match( '/url\s*\(|@import|expression\s*\(|javascript:|\\\\/i', $css );
+	}
+
+	/**
+	 * Remove all processing instructions and comments from the document.
+	 *
+	 * @param \DOMDocument $dom Parsed SVG document.
+	 */
+	private function remove_pis_and_comments( \DOMDocument $dom ): void {
+		$xpath = new \DOMXPath( $dom );
+		$nodes = $xpath->query( '//processing-instruction() | //comment()' );
+
+		if ( false === $nodes ) {
+			return;
+		}
+
+		$stale = array();
+
+		foreach ( $nodes as $node ) {
+			$stale[] = $node;
+		}
+
+		foreach ( $stale as $node ) {
+			if ( $node->parentNode ) {
+				$node->parentNode->removeChild( $node );
+			}
+		}
 	}
 }

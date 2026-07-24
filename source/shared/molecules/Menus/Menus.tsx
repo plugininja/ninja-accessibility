@@ -4,6 +4,7 @@ import { Dropdown } from "~/ui/molecules";
 import { Card } from "~/ui/molecules";
 import { Text } from "~/ui/atoms";
 import { Icon } from "~/ui/atoms";
+import { toBoolean } from "~/kernel/utils/functions";
 import {
     useRef,
     useState,
@@ -125,7 +126,7 @@ const Menus = ({
             }}
         >
             <InlineStack gap={5} align="center" wrap={false}>
-                {menus?.map(({ key, title, icon }) => {
+                {menus?.map(({ key, title, icon, isPro }) => {
                     const isActive = key === active;
                     const isHidden = hiddenKeys.has(key);
 
@@ -157,6 +158,7 @@ const Menus = ({
                                 menuKey={key}
                                 title={title}
                                 icon={icon}
+                                isPro={isPro}
                                 isActive={isActive}
                                 tabIndex={isActive ? 0 : -1}
                                 onMenuClick={onMenuClick}
@@ -224,7 +226,7 @@ const Menus = ({
                                 borderRadius: "12px",
                             }}
                         >
-                            {hiddenMenus.map(({ key, title, icon }) => {
+                            {hiddenMenus.map(({ key, title, icon, isPro }) => {
                                 const isActive = key === active;
 
                                 return (
@@ -233,6 +235,7 @@ const Menus = ({
                                         menuKey={key}
                                         title={title}
                                         icon={icon}
+                                        isPro={isPro}
                                         isActive={isActive}
                                         onMenuClick={onMenuClick}
                                     />
@@ -248,9 +251,20 @@ const Menus = ({
 
 Menus.Menu = forwardRef<HTMLDivElement, MenuProps>(
     (
-        { menuKey, title, icon, isActive, tabIndex, onMenuClick, onKeyDown },
+        {
+            menuKey,
+            title,
+            icon,
+            isPro,
+            isActive,
+            tabIndex,
+            onMenuClick,
+            onKeyDown,
+        },
         ref,
     ) => {
+        const showProBadge = isPro && !toBoolean(window.pnpna?.is_pro);
+
         return (
             <Card
                 ref={ref}
@@ -284,6 +298,14 @@ Menus.Menu = forwardRef<HTMLDivElement, MenuProps>(
                 >
                     {title}
                 </Text>
+
+                {showProBadge && (
+                    <Icon
+                        name="crown"
+                        color={isActive ? "black" : "gray-500"}
+                        fontSize="sm"
+                    />
+                )}
             </Card>
         );
     },

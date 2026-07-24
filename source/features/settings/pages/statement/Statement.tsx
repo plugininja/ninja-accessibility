@@ -240,13 +240,13 @@ export default function Statement() {
 						) }
 					</BlockStack>
 
-					<InlineStack gap={ 10 } alignment="center">
+					<InlineStack gap={ 10 } align="center" blockAlign="center">
 						<div style={ { width: 1, height: 40, background: '#e5e7eb' } } />
 						<Text size="sm" color="gray-500">{ __( 'or', 'ninja-accessibility' ) }</Text>
 						<div style={ { width: 1, height: 40, background: '#e5e7eb' } } />
 					</InlineStack>
 
-					<InlineStack gap={ 10 } alignment="center">
+					<InlineStack gap={ 10 } align="center" blockAlign="center">
 						<Button
 							variant="primary"
 							startIcon="add"

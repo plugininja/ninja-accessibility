@@ -1,9 +1,11 @@
 /**
  * Frontend accessibility panel — accessiy design:
  * teal header (title, language picker, reset / hide / close actions),
- * CONTENT and COLOR section pills, a flat 3-column tile grid where
- * multi-step features cycle and show their current value, and a teal
- * footer with the accessibility-statement link and (opt-in) attribution.
+ * an Accessibility Profiles section (UserWay-style preset groups with an
+ * Oversized Widget toggle), CONTENT and COLOR section pills, a flat
+ * 3-column tile grid where multi-step features cycle and show their
+ * current value, and a teal footer with the accessibility-statement link
+ * and (opt-in) attribution.
  */
 
 import { useEffect, useRef, useState } from "@wordpress/element";
@@ -12,19 +14,32 @@ import useTranslation, {
 } from "~/features/widget/i18n/useTranslation";
 import LanguageSelector from "~/features/widget/components/LanguageSelector";
 import {
+    closePanel,
     resetAllFeatures,
     selectActiveFeatures,
+    selectActiveProfiles,
     selectEnabledFeatures,
+    selectEnabledProfiles,
     selectIsOpen,
     selectLanguage,
+    selectOversized,
     setFeatureStep,
     setLanguage,
+    setOversized,
+    toggleProfile,
 } from "~/features/widget/state/widgetSlice";
-import { setStoredLanguage } from "~/features/widget/utils/storage";
+import {
+    setStoredLanguage,
+    setStoredOversized,
+} from "~/features/widget/utils/storage";
 import { STEP_COUNTS } from "~/features/widget/utils/accessibility";
+import {
+    PROFILES,
+    mergeProfilePresets,
+} from "~/features/widget/utils/profiles";
 import { useWidgetDispatch, useWidgetSelector } from "~/kernel/store/hooks";
 import type { LanguageKey } from "~/features/widget/i18n/languages";
-import type { FeatureKey } from "~/kernel/types/widget";
+import type { FeatureKey, ProfileKey } from "~/kernel/types/widget";
 
 // ─── Tile metadata (labels/values are translation keys where possible) ───────
 
@@ -198,13 +213,33 @@ export default function Panel({
     const open = useWidgetSelector(selectIsOpen);
     const activeFeatures = useWidgetSelector(selectActiveFeatures);
     const enabledFeatures = useWidgetSelector(selectEnabledFeatures);
+    const activeProfiles = useWidgetSelector(selectActiveProfiles);
+    const enabledProfiles = useWidgetSelector(selectEnabledProfiles);
+    const oversized = useWidgetSelector(selectOversized);
     const language = useWidgetSelector(selectLanguage);
     const panelRef = useRef<HTMLDivElement>(null);
+    const cancelHideRef = useRef<HTMLButtonElement>(null);
     const [confirmHide, setConfirmHide] = useState(false);
     const t = useTranslation();
 
     const statementUrl = window.pnpna?.statementUrl || "";
     const showBranding = window.pnpna?.showBranding === true;
+
+    // Dialog pattern: when the panel opens, move focus into it so keyboard
+    // and screen-reader users land on the dialog (WCAG 2.4.3 focus order).
+    // Focus returns to the toggle button on close (handled by onClose).
+    useEffect(() => {
+        if (open) {
+            panelRef.current?.focus();
+        }
+    }, [open]);
+
+    // The hide-confirmation alertdialog takes focus on its safe action.
+    useEffect(() => {
+        if (confirmHide) {
+            cancelHideRef.current?.focus();
+        }
+    }, [confirmHide]);
 
     // Escape closes; Tab is trapped inside the dialog while open.
     useEffect(() => {
@@ -214,7 +249,12 @@ export default function Panel({
 
         const onKey = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
-                onClose();
+                // Escape dismisses the innermost layer first.
+                if (confirmHide) {
+                    setConfirmHide(false);
+                } else {
+                    onClose();
+                }
                 return;
             }
 
@@ -246,7 +286,36 @@ export default function Panel({
 
         document.addEventListener("keydown", onKey);
         return () => document.removeEventListener("keydown", onKey);
-    }, [open, onClose]);
+    }, [open, onClose, confirmHide]);
+
+    // Blur behavior: clicking/tapping anywhere outside the panel closes it.
+    // The toggle button is excluded — it manages open/close itself, and
+    // closing here first would make its click immediately reopen the panel.
+    useEffect(() => {
+        if (!open) {
+            return;
+        }
+
+        const onPointerDown = (e: PointerEvent) => {
+            const target = e.target as HTMLElement | null;
+
+            if (!target || !panelRef.current) {
+                return;
+            }
+
+            if (
+                panelRef.current.contains(target) ||
+                target.closest(".pnpna-toggle-btn")
+            ) {
+                return;
+            }
+
+            dispatch(closePanel());
+        };
+
+        document.addEventListener("pointerdown", onPointerDown);
+        return () => document.removeEventListener("pointerdown", onPointerDown);
+    }, [open, dispatch]);
 
     const stepOf = (key: FeatureKey) => activeFeatures[key] || 0;
 
@@ -260,6 +329,58 @@ export default function Panel({
         onResetAll();
     };
 
+    /**
+     * Toggle a profile. Multiple profiles can be active at once — the
+     * merged preset (highest step wins) decides each feature's step.
+     * Steps the visitor has raised above a preset are never lowered.
+     */
+    const handleProfileToggle = (key: ProfileKey) => {
+        const isOn = activeProfiles.includes(key);
+        const next = isOn
+            ? activeProfiles.filter((k) => k !== key)
+            : [...activeProfiles, key];
+
+        const mergedPrev = mergeProfilePresets(activeProfiles, enabledFeatures);
+        const mergedNext = mergeProfilePresets(next, enabledFeatures);
+
+        dispatch(toggleProfile(key));
+
+        const touched = Object.keys({
+            ...mergedPrev,
+            ...mergedNext,
+        }) as FeatureKey[];
+
+        touched.forEach((feature) => {
+            const prevStep = mergedPrev[feature] || 0;
+            const nextStep = mergedNext[feature] || 0;
+
+            if (prevStep === nextStep) {
+                return;
+            }
+
+            const current = activeFeatures[feature] || 0;
+            let target = current;
+
+            if (nextStep > prevStep) {
+                // Switching on: raise to the preset, keep stronger manual steps.
+                target = Math.max(current, nextStep);
+            } else if (current <= prevStep) {
+                // Switching off: only lower steps the visitor didn't raise.
+                target = nextStep;
+            }
+
+            if (target !== current) {
+                dispatch(setFeatureStep({ key: feature, step: target }));
+                onFeatureStep(feature, target);
+            }
+        });
+    };
+
+    const handleOversizedToggle = () => {
+        dispatch(setOversized(!oversized));
+        setStoredOversized(!oversized);
+    };
+
     const handleLanguage = (lang: LanguageKey) => {
         dispatch(setLanguage(lang));
         setStoredLanguage(lang);
@@ -270,9 +391,29 @@ export default function Panel({
     const contentTiles = CONTENT_TILES.filter((m) => isEnabled(m.key));
     const colorTiles = COLOR_TILES.filter((m) => isEnabled(m.key));
 
+    // Offered profiles: enabled by the admin (pro-gated server-side) AND
+    // with at least one of their preset features available.
+    const profileTiles = PROFILES.filter(
+        (p) =>
+            enabledProfiles.includes(p.key) &&
+            Object.keys(mergeProfilePresets([p.key], enabledFeatures)).length >
+                0,
+    );
+
+    const showOversized = window.pnpna?.oversizedWidget !== false;
+
+    // WCAG 3.1.2 (Language of Parts): the visitor can pick a panel language
+    // that differs from the page language, so the dialog declares its own
+    // lang (BCP 47) and switches to RTL for Arabic.
+    const panelLang = language.replace("_", "-");
+    const panelDir = language === "ar" ? "rtl" : "ltr";
+
     let panelClass = "pnpna-panel";
     if (open) {
         panelClass += " pnpna-panel--open";
+    }
+    if (oversized) {
+        panelClass += " pnpna-panel--oversized";
     }
     if (panelLeft) {
         panelClass += " pnpna-panel--left";
@@ -288,7 +429,10 @@ export default function Panel({
             role="dialog"
             aria-modal="false"
             aria-label={t("AccessibilityAdjustments")}
-            hidden={!open}
+            aria-hidden={!open}
+            lang={panelLang}
+            dir={panelDir}
+            tabIndex={-1}
         >
             {/* Header (teal) */}
             <div className="pnpna-panel__topbar">
@@ -347,6 +491,97 @@ export default function Panel({
 
             {/* Scrollable body */}
             <div className="pnpna-panel__body">
+                {profileTiles.length > 0 && (
+                    <>
+                        <div className="pnpna-panel__section-pill">
+                            {t("AccessibilityProfiles")}
+                        </div>
+                        <div
+                            className="pnpna-panel__profiles"
+                            role="group"
+                            aria-label={t("AccessibilityProfiles")}
+                        >
+                            {profileTiles.map((p) => {
+                                const active = activeProfiles.includes(p.key);
+                                const descId = `pnpna-profile-desc-${p.key}`;
+                                return (
+                                    <button
+                                        key={p.key}
+                                        type="button"
+                                        role="switch"
+                                        aria-checked={active}
+                                        aria-describedby={descId}
+                                        className={
+                                            "pnpna-profile" +
+                                            (active
+                                                ? " pnpna-profile--active"
+                                                : "")
+                                        }
+                                        title={t(p.descriptionKey)}
+                                        onClick={() =>
+                                            handleProfileToggle(p.key)
+                                        }
+                                    >
+                                        <span
+                                            className="pnpna-profile__icon material-symbols-outlined"
+                                            aria-hidden="true"
+                                        >
+                                            {p.icon}
+                                        </span>
+                                        <span className="pnpna-profile__label">
+                                            {t(p.labelKey)}
+                                        </span>
+                                        {/* Announced by screen readers via
+                                            aria-describedby; visually hidden. */}
+                                        <span
+                                            id={descId}
+                                            className="pnpna-visually-hidden"
+                                        >
+                                            {t(p.descriptionKey)}
+                                        </span>
+                                        <span
+                                            className="pnpna-profile__check material-symbols-outlined"
+                                            aria-hidden="true"
+                                        >
+                                            {active
+                                                ? "check_circle"
+                                                : "radio_button_unchecked"}
+                                        </span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        {showOversized && (
+                            <button
+                                type="button"
+                                role="switch"
+                                aria-checked={oversized}
+                                className={
+                                    "pnpna-oversized" +
+                                    (oversized ? " pnpna-oversized--on" : "")
+                                }
+                                onClick={handleOversizedToggle}
+                            >
+                                <span
+                                    className="pnpna-oversized__xl"
+                                    aria-hidden="true"
+                                >
+                                    XL
+                                </span>
+                                <span className="pnpna-oversized__label">
+                                    {t("OversizedWidget")}
+                                </span>
+                                <span
+                                    className="pnpna-oversized__switch"
+                                    aria-hidden="true"
+                                >
+                                    <span className="pnpna-oversized__knob" />
+                                </span>
+                            </button>
+                        )}
+                    </>
+                )}
+
                 {contentTiles.length > 0 && (
                     <>
                         <div className="pnpna-panel__section-pill">

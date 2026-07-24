@@ -19,17 +19,6 @@
     .pnpna-logo {
         display: inline-flex;
         align-items: center;
-        gap: 10px;
-
-        &__text {
-            font-size: var(--pnpna-font-size-md);
-            color: $gray-700;
-
-            strong {
-                font-weight: var(--pnpna-font-weight-semibold);
-                color: $gray-900;
-            }
-        }
     }
 
     /* Statement generator */
@@ -282,6 +271,17 @@
                 0 0 0 2px $primary,
                 0 2px 6px rgba(0, 0, 0, 0.15);
         }
+
+        // Auto contrast (Accessiy's ccpa-darker-icon behaviour): when the
+        // widget background colour is light (~80% white), flip the white
+        // glyph to dark so the preview stays visible.
+        &--glyph.pnpna-darker-icon {
+            border-color: $gray-200;
+
+            img {
+                filter: brightness(0);
+            }
+        }
     }
 
     .pnpna-position-grid {
@@ -365,5 +365,80 @@
 
     &--error {
         background: var(--pnpna-error, #ff0000);
+    }
+}
+
+/* ── Analytics (premium) ───────────────────────────────────────────────── */
+
+.pnpna-analytics-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 20px;
+    align-items: start;
+
+    @media (max-width: 960px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.pnpna-analytics-chart {
+    display: block;
+    height: auto;
+
+    text {
+        font-family: var(--pnpna-font-family);
+    }
+
+    &__hit:hover {
+        fill: rgba(145, 71, 255, 0.04);
+    }
+}
+
+.pnpna-analytics-legend {
+    &__item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+
+        i {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+    }
+}
+
+.pnpna-analytics-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--pnpna-gray-100, #f3f4f6);
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    &--head {
+        padding: 6px 0;
+        border-bottom: 1px solid var(--pnpna-gray-200, #e5e7eb);
+    }
+
+    &__no {
+        min-width: 24px;
+        font-size: var(--pnpna-font-size-xs);
+        color: var(--pnpna-gray-500, #6b7280);
+    }
+
+    &__icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border: 1px solid var(--pnpna-gray-200, #e5e7eb);
+        border-radius: var(--pnpna-radius-md);
+        background: var(--pnpna-gray-50, #f9fafb);
     }
 }

@@ -43,7 +43,7 @@ export default {
     },
 
     output: {
-        path: path.resolve(__dirname, "assets/js"),
+        path: path.resolve(__dirname, "../assets/js"),
         filename: "[name].js",
         chunkFilename: "chunks/[name].chunk.js",
         clean: true,
@@ -87,12 +87,12 @@ export default {
             patterns: [
                 {
                     from: path.resolve(__dirname, "source/assets/images"),
-                    to: path.resolve(__dirname, "assets/images"),
+                    to: path.resolve(__dirname, "../assets/images"),
                     noErrorOnMissing: true,
                 },
                 {
                     from: path.resolve(__dirname, "source/assets/fonts"),
-                    to: path.resolve(__dirname, "assets/fonts"),
+                    to: path.resolve(__dirname, "../assets/fonts"),
                     noErrorOnMissing: true,
                 },
                 {

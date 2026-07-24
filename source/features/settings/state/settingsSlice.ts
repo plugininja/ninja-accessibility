@@ -48,10 +48,22 @@ const settingsSlice = createSlice( {
 		markSaved( state ) {
 			state.savedData = { ...state.data };
 		},
+		/**
+		 * Persist a single key to both data and savedData — used for
+		 * independent auto-saves (e.g. dark mode toggle) that must not
+		 * dirty the rest of the form.
+		 */
+		persistSetting<K extends keyof PluginSettings>(
+			state: SettingsState,
+			action: PayloadAction<{ key: K; value: PluginSettings[ K ] }>
+		) {
+			( state.data as Record<string, unknown> )[ action.payload.key ] = action.payload.value;
+			( state.savedData as Record<string, unknown> )[ action.payload.key ] = action.payload.value;
+		},
 	},
 } );
 
-export const { hydrate, updateSetting, resetToDefaults, markSaved } = settingsSlice.actions;
+export const { hydrate, updateSetting, resetToDefaults, markSaved, persistSetting } = settingsSlice.actions;
 export default settingsSlice.reducer;
 
 // ─── Selectors ────────────────────────────────────────────────────────────────

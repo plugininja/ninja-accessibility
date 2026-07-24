@@ -24,6 +24,6 @@ export const wpBaseQuery = fetchBaseQuery( {
 export const baseApi = createApi( {
 	reducerPath: 'baseApi',
 	baseQuery: wpBaseQuery,
-	tagTypes: [ 'Settings', 'Pages' ],
+	tagTypes: [ 'Settings', 'Pages', 'Analytics' ],
 	endpoints: () => ( {} ),
 } );

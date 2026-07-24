@@ -10,6 +10,8 @@ export interface MenuItem {
 	title: string;
 	icon: string;
 	desc: string;
+	/** Premium feature — shows a crown badge in the menu for free users. */
+	isPro?: boolean;
 	statusProps?: StatusProps;
 }
 
@@ -44,7 +46,7 @@ export const SETTINGS_MENU: MenuItem[] = [
 		icon: 'mouse',
 		desc: __( 'Enable options to adjust cursor size, color, and highlight for better visibility.', 'ninja-accessibility' ),
 	},
-	];
+];
 
 export const DEFAULT_MENU_KEY = 'general';
 

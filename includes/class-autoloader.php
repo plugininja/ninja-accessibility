@@ -101,14 +101,24 @@ final class Autoloader {
 	 * @return string
 	 */
 	private static function to_kebab_case( string $text ): string {
-		// Preserve double-underscore premium suffix markers.
-		$text = str_replace( '__', "\x00", $text );
+		// Preserve Freemius premium suffix markers verbatim, so
+		// Analytics__premium_only resolves to class-analytics__premium_only.php.
+		$text = str_replace(
+			array( '__premium_only', '__premium_ui' ),
+			array( "\x00", "\x01" ),
+			$text
+		);
 		$text = preg_replace( '/([A-Z]+)/', '-$1', lcfirst( $text ) );
 		$text = strtolower( $text );
-		$text = str_replace( "\x00", '__', $text );
 		$text = str_replace( '_', '-', $text );
 		$text = preg_replace( '/-+/', '-', $text );
-		return ltrim( $text, '-' );
+		$text = ltrim( $text, '-' );
+
+		return str_replace(
+			array( "\x00", "\x01" ),
+			array( '__premium_only', '__premium_ui' ),
+			$text
+		);
 	}
 
 	/**

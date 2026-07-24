@@ -1,5 +1,9 @@
 /**
  * Capabilities page — toggle each accessibility feature offered by the widget.
+ *
+ * Premium-locked items mirror the Accessiy pro map: they render with an
+ * upgrade badge (Status) for free users and are enforced server-side in
+ * Helpers::get_active_elements().
  */
 
 import { __ } from '@wordpress/i18n';
@@ -8,14 +12,25 @@ import { useAppDispatch, useAppSelector } from '~/kernel/store/hooks';
 import { updateSetting, selectSettings } from '~/features/settings/state/settingsSlice';
 import SettingsField from '~/shared/molecules/SettingsField';
 import { GridStack, InlineStack, PageContainer } from '~/ui/molecules';
-import { Button, Icon, Input, Switcher, Text } from '~/ui/atoms';
+import { Button, Icon, Input, Status, Switcher, Text } from '~/ui/atoms';
+import { toBoolean } from '~/kernel/utils/functions';
 import type { PluginSettings } from '~/kernel/types/settings';
 
 interface CapItem {
 	key: keyof PluginSettings;
 	label: string;
 	icon: string;
+	isPro?: boolean;
 }
+
+// Accessibility profiles (UserWay-style preset groups). Pro-locked profiles
+// mirror Helpers::PRO_PROFILES — their presets depend on pro capabilities.
+const ACCESSIBILITY_PROFILES: CapItem[] = [
+	{ key: 'profile_motor_impaired', label: __( 'Motor Impaired', 'ninja-accessibility' ), icon: 'accessible' },
+	{ key: 'profile_dyslexia', label: __( 'Dyslexia', 'ninja-accessibility' ), icon: 'spellcheck' },
+	{ key: 'profile_low_vision', label: __( 'Low Vision', 'ninja-accessibility' ), icon: 'visibility' },
+	{ key: 'profile_cognitive_learning', label: __( 'Cognitive & Learning', 'ninja-accessibility' ), icon: 'extension' },
+];
 
 const CONTENT_ADJUSTMENTS: CapItem[] = [
 	{ key: 'content_scaling', label: __( 'Content Scaling', 'ninja-accessibility' ), icon: 'open_in_full' },
@@ -24,34 +39,25 @@ const CONTENT_ADJUSTMENTS: CapItem[] = [
 	{ key: 'letter_spacing', label: __( 'Letter Spacing', 'ninja-accessibility' ), icon: 'format_letter_spacing' },
 	{ key: 'text_align', label: __( 'Text Align', 'ninja-accessibility' ), icon: 'format_align_left' },
 	{ key: 'readable_font', label: __( 'Readable Font', 'ninja-accessibility' ), icon: 'font_download' },
-	{ key: 'text_magnifier', label: __( 'Text Magnifier', 'ninja-accessibility' ), icon: 'zoom_in' },
 	{ key: 'highlight_links', label: __( 'Highlight Links', 'ninja-accessibility' ), icon: 'link' },
 ];
 
 const NAVIGATION_TOOLS: CapItem[] = [
 	{ key: 'cursor', label: __( 'Big Cursor', 'ninja-accessibility' ), icon: 'mouse' },
-	{ key: 'page_structure', label: __( 'Page Structure', 'ninja-accessibility' ), icon: 'account_tree' },
-	{ key: 'screen_reader', label: __( 'Screen Reader', 'ninja-accessibility' ), icon: 'record_voice_over' },
-	{ key: 'reading_mask', label: __( 'Reading Mask', 'ninja-accessibility' ), icon: 'view_agenda' },
 	{ key: 'reading_line', label: __( 'Reading Line', 'ninja-accessibility' ), icon: 'horizontal_rule' },
-	{ key: 'sitemap', label: __( 'Sitemap', 'ninja-accessibility' ), icon: 'map' },
 	{ key: 'outline_focus', label: __( 'Outline Focus', 'ninja-accessibility' ), icon: 'center_focus_strong' },
 ];
 
 const VISUAL_ADJUSTMENTS: CapItem[] = [
 	{ key: 'hide_images', label: __( 'Hide Images', 'ninja-accessibility' ), icon: 'image_not_supported' },
 	{ key: 'pause_animation', label: __( 'Pause Animations', 'ninja-accessibility' ), icon: 'motion_photos_paused' },
-	{ key: 'mute_sounds', label: __( 'Mute Sounds', 'ninja-accessibility' ), icon: 'volume_off' },
-	{ key: 'grey_scale', label: __( 'Greyscale', 'ninja-accessibility' ), icon: 'invert_colors_off' },
-	{ key: 'contrast', label: __( 'High Contrast', 'ninja-accessibility' ), icon: 'contrast' },
-	{ key: 'invert_color', label: __( 'Invert Colors', 'ninja-accessibility' ), icon: 'invert_colors' },
 	{ key: 'brightness', label: __( 'Brightness', 'ninja-accessibility' ), icon: 'brightness_high' },
-	{ key: 'saturation', label: __( 'Saturation', 'ninja-accessibility' ), icon: 'water_drop' },
 ];
 
 function CapabilityGrid( { items, search }: { items: CapItem[]; search: string } ) {
 	const dispatch = useAppDispatch();
 	const settings = useAppSelector( selectSettings );
+	const isProUser = toBoolean( window.pnpna?.is_pro );
 
 	return (
 		<GridStack columns={ 2 } gap={ 12 }>
@@ -61,9 +67,8 @@ function CapabilityGrid( { items, search }: { items: CapItem[]; search: string }
 					return null;
 				}
 
-				return (
+				const row = (
 					<InlineStack
-						key={ item.key }
 						gap={ 10 }
 						align="between"
 						className="pnpna-capability"
@@ -74,7 +79,7 @@ function CapabilityGrid( { items, search }: { items: CapItem[]; search: string }
 						</InlineStack>
 						<Switcher
 							ariaLabel={ item.label }
-							checked={ settings[ item.key ] === '1' }
+							checked={ settings[ item.key ] === '1' && ( ! item.isPro || isProUser ) }
 							onChange={ ( checked ) =>
 								dispatch(
 									updateSetting( {
@@ -86,6 +91,22 @@ function CapabilityGrid( { items, search }: { items: CapItem[]; search: string }
 						/>
 					</InlineStack>
 				);
+
+				if ( item.isPro ) {
+					return (
+						<Status
+							key={ item.key }
+							isPro
+							size="extrasmall"
+							placement="right-center"
+							right={ 45 }
+						>
+							{ row }
+						</Status>
+					);
+				}
+
+				return <div key={ item.key }>{ row }</div>;
 			} ) }
 		</GridStack>
 	);
@@ -102,13 +123,16 @@ export default function Capabilities() {
 	const dispatch = useAppDispatch();
 	const settings = useAppSelector( selectSettings );
 	const [ search, setSearch ] = useState( '' );
+	const isProUser = toBoolean( window.pnpna?.is_pro );
 
-	// Get all feature keys
-	const allFeatureKeys = ALL_CAPABILITIES.map( ( item ) => item.key );
+	// Bulk actions only touch features the current license may change.
+	const editableKeys = ALL_CAPABILITIES
+		.filter( ( item ) => ! item.isPro || isProUser )
+		.map( ( item ) => item.key );
 
 	// Handle Enable All
 	const handleEnableAll = () => {
-		allFeatureKeys.forEach( ( key ) => {
+		editableKeys.forEach( ( key ) => {
 			if ( settings[ key ] !== '1' ) {
 				dispatch( updateSetting( { key, value: '1' as never } ) );
 			}
@@ -117,7 +141,7 @@ export default function Capabilities() {
 
 	// Handle Disable All
 	const handleDisableAll = () => {
-		allFeatureKeys.forEach( ( key ) => {
+		editableKeys.forEach( ( key ) => {
 			if ( settings[ key ] === '1' ) {
 				dispatch( updateSetting( { key, value: '0' as never } ) );
 			}
@@ -137,7 +161,7 @@ export default function Capabilities() {
 						value={ search }
 						onChange={ ( value ) => setSearch( String( value ) ) }
 						fullWidth={ false }
-						customWidth="180px"
+						customWidth="380px"
 					/>
 
 					<InlineStack gap={ 10 }>
@@ -160,6 +184,57 @@ export default function Capabilities() {
 						</Button>
 					</InlineStack>
 				</InlineStack>
+			</SettingsField>
+
+			<SettingsField
+				title={ __( 'Accessibility Profiles', 'ninja-accessibility' ) }
+				description={ __( 'One-click preset groups (UserWay style) shown at the top of the widget. Each profile switches on a set of capabilities suited to a specific need.', 'ninja-accessibility' ) }
+				action={
+					<Switcher
+						ariaLabel={ __( 'Enable accessibility profiles', 'ninja-accessibility' ) }
+						checked={ settings.enable_profiles === '1' }
+						onChange={ ( checked ) =>
+							dispatch(
+								updateSetting( {
+									key: 'enable_profiles',
+									value: ( checked ? '1' : '0' ) as never,
+								} )
+							)
+						}
+					/>
+				}
+			>
+				{ settings.enable_profiles === '1' && (
+					<>
+						<CapabilityGrid items={ ACCESSIBILITY_PROFILES } search={ search } />
+
+						<InlineStack
+							gap={ 10 }
+							align="between"
+							className="pnpna-capability"
+							style={ { marginTop: 12 } }
+						>
+							<InlineStack gap={ 10 }>
+								<Icon name="open_in_full" color="gray-600" fontSize="lg" />
+								<Text size="sm" color="gray-700">
+									{ __( 'Offer "Oversized Widget" toggle to visitors', 'ninja-accessibility' ) }
+								</Text>
+							</InlineStack>
+							<Switcher
+								ariaLabel={ __( 'Offer Oversized Widget toggle', 'ninja-accessibility' ) }
+								checked={ settings.oversized_widget === '1' }
+								onChange={ ( checked ) =>
+									dispatch(
+										updateSetting( {
+											key: 'oversized_widget',
+											value: ( checked ? '1' : '0' ) as never,
+										} )
+									)
+								}
+							/>
+						</InlineStack>
+					</>
+				) }
 			</SettingsField>
 
 			<SettingsField

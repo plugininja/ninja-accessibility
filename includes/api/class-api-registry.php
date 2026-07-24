@@ -33,7 +33,10 @@ class Api_Registry {
 			'settings' => new Settings(),
 		);
 
-		
+		if ( class_exists( Controllers\Analytics__premium_only::class ) ) {
+			$this->controllers['analytics'] = new Controllers\Analytics__premium_only();
+		}
+
 		/**
 		 * Filter the registered REST controllers.
 		 *

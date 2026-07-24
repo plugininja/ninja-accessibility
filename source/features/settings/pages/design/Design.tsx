@@ -1,5 +1,8 @@
 /**
  * Design settings page — widget icon, colors, and per-device position.
+ *
+ * Premium (Accessiy pro map): custom icon upload, tablet / mobile
+ * positioning, and exact positioning. Enforced server-side in App\Display.
  */
 
 import { useState } from '@wordpress/element';
@@ -14,8 +17,9 @@ import {
 	PageContainer,
 	SelectBox,
 } from '~/ui/molecules';
-import { Button, ColorPicker, Slider, Switcher, Text } from '~/ui/atoms';
+import { Button, ColorPicker, Slider, Status, Switcher, Text } from '~/ui/atoms';
 import PositionPicker from '~/ui/controls/PositionPicker';
+import { isLightColor, toBoolean } from '~/kernel/utils/functions';
 import type { IconPosition, IconSize, PluginSettings } from '~/kernel/types/settings';
 
 type DeviceKey = 'desktop' | 'tablet' | 'phone';
@@ -38,31 +42,64 @@ const BUILT_IN_ICONS = [
 	{ id: 'icon7' },
 ];
 
-const DEVICES: { key: DeviceKey; label: string; icon: string }[] = [
+const DEVICES: { key: DeviceKey; label: string; icon: string; isPro?: boolean }[] = [
 	{ key: 'desktop', label: __( 'Desktop', 'ninja-accessibility' ), icon: 'desktop_windows' },
-	{ key: 'tablet', label: __( 'Tablet', 'ninja-accessibility' ), icon: 'tablet' },
-	{ key: 'phone', label: __( 'Mobile', 'ninja-accessibility' ), icon: 'phone_iphone' },
 ];
+
+interface MediaFrame {
+	on: ( event: string, cb: () => void ) => void;
+	open: () => void;
+	state: () => { get: ( k: string ) => { first: () => { toJSON: () => { url?: string } } } };
+}
 
 export default function Design() {
 	const dispatch = useAppDispatch();
 	const settings = useAppSelector( selectSettings );
 	const [ device, setDevice ] = useState<DeviceKey>( 'desktop' );
+	const isProUser = toBoolean( window.pnpna?.is_pro );
 
 	function update<K extends keyof PluginSettings>( key: K, value: PluginSettings[ K ] ) {
 		dispatch( updateSetting( { key, value } ) );
 	}
 
 	const iconId = settings.widget_icon?.id || 'icon1';
+	const customIconUrl = settings.widget_icon?.icon || '';
 	const iconSize = ( settings.icon_size || 'pnpna-icon-lg' ) as IconSize;
 	const radius = parseInt( String( settings.icon_corner_radius || 100 ), 10 );
-	const bgColor = String( settings.icon_bg_color || '#003C43' );
+	const bgColor = String( settings.icon_bg_color || '#9147FF' );
+
+	// Accessiy parity: when the background colour is very light (~80% white),
+	// flip the white glyph to a dark one so it stays visible.
+	const darkIcon = isLightColor( bgColor );
 
 	const showIcon = settings[ `show_icon_${ device }` ] === '1';
-	const exact = settings[ `exact_position_${ device }` ] === '1';
+	const exact = isProUser && settings[ `exact_position_${ device }` ] === '1';
 	const position = String( settings[ `${ device }_icon_position` ] || 'bottom-right' );
 	const exactX = parseInt( String( settings[ `exact_position_${ device }_x` ] || 40 ), 10 );
 	const exactY = parseInt( String( settings[ `exact_position_${ device }_y` ] || 40 ), 10 );
+
+	const openMediaLibrary = () => {
+		const wpGlobal = ( window as unknown as { wp?: { media?: ( args: object ) => MediaFrame } } ).wp;
+
+		if ( ! wpGlobal?.media ) {
+			return;
+		}
+
+		const frame = wpGlobal.media( {
+			title: __( 'Select Widget Icon', 'ninja-accessibility' ),
+			multiple: false,
+			library: { type: 'image' },
+		} );
+
+		frame.on( 'select', () => {
+			const attachment = frame.state().get( 'selection' ).first().toJSON();
+			if ( attachment.url ) {
+				update( 'widget_icon', { id: 'custom', icon: attachment.url } );
+			}
+		} );
+
+		frame.open();
+	};
 
 	return (
 		<PageContainer compact style={ { margin: '0 auto' } }>
@@ -83,6 +120,7 @@ export default function Design() {
 									type="button"
 									className={
 										'pnpna-icon-choice pnpna-icon-choice--glyph' +
+										( darkIcon ? ' pnpna-darker-icon' : '' ) +
 										( iconId === icon.id ? ' pnpna-icon-choice--active' : '' )
 									}
 									style={ { background: bgColor } }
@@ -123,7 +161,7 @@ export default function Design() {
 							</Text>
 							<ColorPicker
 								selectedColor={ bgColor }
-								defaultColor="#003C43"
+								defaultColor="#9147FF"
 								onChange={ ( color ) => update( 'icon_bg_color', color ) }
 							/>
 						</BlockStack>
@@ -152,17 +190,40 @@ export default function Design() {
 			>
 				<BlockStack gap={ 20 }>
 					<InlineStack gap={ 8 }>
-						{ DEVICES.map( ( item ) => (
-							<Button
-								key={ item.key }
-								variant={ device === item.key ? 'primary' : 'outlined' }
-								size="small"
-								startIcon={ item.icon }
-								onClick={ () => setDevice( item.key ) }
-							>
-								{ item.label }
-							</Button>
-						) ) }
+						{ DEVICES.map( ( item ) => {
+							const btn = (
+								<Button
+									variant={ device === item.key ? 'primary' : 'outlined' }
+									size="small"
+									startIcon={ item.icon }
+									onClick={ () => {
+										if ( item.isPro && ! isProUser ) {
+											return;
+										}
+										setDevice( item.key );
+									} }
+								>
+									{ item.label }
+								</Button>
+							);
+
+							if ( item.isPro ) {
+								return (
+									<Status
+										key={ item.key }
+										isPro
+										size="extrasmall"
+										widthFull={ false }
+										top={ -6 }
+										right={ -6 }
+									>
+										{ btn }
+									</Status>
+								);
+							}
+
+							return <div key={ item.key }>{ btn }</div>;
+						} ) }
 					</InlineStack>
 
 					<BlockStack gap={ 10 }>
@@ -193,48 +254,6 @@ export default function Design() {
 								/>
 							</BlockStack>
 
-							<BlockStack gap={ 10 }>
-								<Switcher
-									title={ __( 'Exact Position', 'ninja-accessibility' ) }
-									titleSize="sm"
-									checked={ exact }
-									onChange={ ( checked ) =>
-										update( `exact_position_${ device }`, checked ? '1' : '0' )
-									}
-								/>
-								<Description
-									text={ __( "Manually set the icon's distance from the screen edges.", 'ninja-accessibility' ) }
-								/>
-
-								{ exact && (
-									<InlineStack gap={ 20 }>
-										<BlockStack gap={ 5 }>
-											<Text size="xs" color="gray-500">X (px)</Text>
-											<Slider
-												min={ 0 }
-												max={ 400 }
-												value={ exactX }
-												defaultValue={ 40 }
-												onChange={ ( value ) =>
-													update( `exact_position_${ device }_x`, String( value ) )
-												}
-											/>
-										</BlockStack>
-										<BlockStack gap={ 5 }>
-											<Text size="xs" color="gray-500">Y (px)</Text>
-											<Slider
-												min={ 0 }
-												max={ 400 }
-												value={ exactY }
-												defaultValue={ 40 }
-												onChange={ ( value ) =>
-													update( `exact_position_${ device }_y`, String( value ) )
-												}
-											/>
-										</BlockStack>
-									</InlineStack>
-								) }
-							</BlockStack>
 						</>
 					) }
 				</BlockStack>

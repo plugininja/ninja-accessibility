@@ -2,6 +2,8 @@ type Menu = {
     key: string;
     title: string;
     icon?: string;
+    /** Marks the menu as a premium feature (crown badge for free users). */
+    isPro?: boolean;
 };
 
 export interface MenusProps {
@@ -17,6 +19,7 @@ export interface MenuProps {
     menuKey: string;
     title: string;
     icon?: string;
+    isPro?: boolean;
     isActive?: boolean;
     tabIndex?: number;
     onMenuClick?: (menuKey: string) => void;

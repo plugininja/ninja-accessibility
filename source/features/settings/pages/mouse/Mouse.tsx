@@ -1,9 +1,12 @@
 /**
  * Mouse / custom-cursor settings page — design-system components with a
  * live preview of the generated cursor (same SVG the PHP layer outputs).
+ *
+ * Premium (Accessiy pro map): custom cursor upload, cursor effects, and
+ * page-scoped cursor. Enforced server-side in App\Mouse_Customization.
  */
 
-import { useMemo, useState } from '@wordpress/element';
+import { useMemo, useRef, useState } from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import { useAppDispatch, useAppSelector } from '~/kernel/store/hooks';
 import { updateSetting, selectSettings } from '~/features/settings/state/settingsSlice';
@@ -12,20 +15,29 @@ import SettingsField from '~/shared/molecules/SettingsField';
 import {
 	BlockStack,
 	Description,
+	Disabled,
 	InlineStack,
 	PageContainer,
 	SelectBox,
 } from '~/ui/molecules';
-import { Button, ColorPicker, Slider, Switcher, Text } from '~/ui/atoms';
+import { Button, ColorPicker, Slider, Status, Switcher, Text } from '~/ui/atoms';
+import { toBoolean } from '~/kernel/utils/functions';
 import type { PluginSettings } from '~/kernel/types/settings';
 
 // Built-in cursor shapes — MUST stay in sync with Mouse_Customization::SHAPES.
+// Artwork mirrors Accessiy's cursor_icon1–5 designs 1:1, so each glyph matches
+// the animated ring/dot variant that shape produces on the frontend.
 const CURSOR_SHAPES: { id: string; inner: string }[] = [
-	{ id: 'cursor1', inner: '<circle cx="10" cy="10" r="3" fill="{c}"/><circle cx="10" cy="10" r="8" fill="none" stroke="{c}" stroke-width="1.5"/>' },
-	{ id: 'cursor2', inner: '<circle cx="10" cy="10" r="4" fill="none" stroke="{c}" stroke-width="2"/>' },
-	{ id: 'cursor3', inner: '<circle cx="10" cy="10" r="9" fill="none" stroke="{c}" stroke-width="2"/>' },
+	// Dot inside an outlined ring.
+	{ id: 'cursor1', inner: '<circle cx="10" cy="10" r="3" fill="{c}"/><circle cx="10" cy="10" r="9" fill="none" stroke="{c}" stroke-width="1"/>' },
+	// Dot inside a translucent filled circle.
+	{ id: 'cursor2', inner: '<circle cx="10" cy="10" r="10" fill="{c}" fill-opacity="0.1"/><circle cx="10" cy="10" r="3" fill="{c}"/>' },
+	// Outlined ring only.
+	{ id: 'cursor3', inner: '<circle cx="10" cy="10" r="9" fill="none" stroke="{c}" stroke-width="1"/>' },
+	// Small solid dot.
 	{ id: 'cursor4', inner: '<circle cx="10" cy="10" r="5" fill="{c}"/>' },
-	{ id: 'cursor5', inner: '<circle cx="10" cy="10" r="8" fill="{c}"/>' },
+	// Offset double dot (small translucent pair when animated).
+	{ id: 'cursor5', inner: '<circle cx="11" cy="11" r="5" fill="{c}" fill-opacity="0.45"/><circle cx="9" cy="9" r="5" fill="{c}"/>' },
 ];
 
 // File-based cursor designs (accessiy icon set) — fixed artwork, no
@@ -48,11 +60,10 @@ function fileCursorUrl( id: string ): string {
 const CURSOR_EFFECTS = [
 	{ value: 'none', name: __( 'None', 'ninja-accessibility' ) },
 	{ value: 'followingDot', name: __( 'Following Dot', 'ninja-accessibility' ) },
-	];
+];
 
 const ICON_TYPES = [
 	{ value: 'icon', name: __( 'Built-in Icon', 'ninja-accessibility' ) },
-	{ value: 'custom', name: __( 'Custom Upload', 'ninja-accessibility' ) },
 ];
 
 function buildCursorDataUri( shapeId: string, color: string, size: number ): string {
@@ -71,6 +82,7 @@ export default function Mouse() {
 	const dispatch = useAppDispatch();
 	const settings = useAppSelector( selectSettings );
 	const { data: pages = [] } = useGetPagesQuery();
+	const isProUser = toBoolean( window.pnpna?.is_pro );
 
 	const [ iconType, setIconType ] = useState<'icon' | 'custom'>(
 		settings.cursor_icon?.icon ? 'custom' : 'icon'
@@ -101,6 +113,80 @@ export default function Mouse() {
 		return `url("${ url }") ${ hotspot } ${ hotspot }, auto`;
 	}, [ iconType, customIconUrl, iconId, cursorColor, cursorSize ] );
 
+	// ─── Animated ring/dot preview (Accessiy parity) ─────────────────────────
+	// Built-in circle shapes render as an animated ring + dot on the frontend,
+	// so the preview box mirrors that instead of a static cursor image.
+	const isAnimatedShape = iconType === 'icon' && CURSOR_SHAPES.some( ( s ) => s.id === iconId );
+
+	const previewRingRef = useRef< HTMLDivElement | null >( null );
+	const previewDotRef = useRef< HTMLDivElement | null >( null );
+
+	const ringSize = iconId === 'cursor5' ? 12 : Math.max( 12, cursorSize );
+	const dotSize = Math.max( 4, Math.round( ringSize * 0.29 ) );
+
+	const mix = ( transparency: number ) =>
+		`color-mix(in srgb, ${ cursorColor }, transparent ${ transparency }%)`;
+
+	const baseOverlayStyle = {
+		position: 'absolute' as const,
+		top: 0,
+		left: 0,
+		borderRadius: 500,
+		pointerEvents: 'none' as const,
+		transform: 'translate(-200px, -200px)',
+	};
+
+	const ringVariant =
+		iconId === 'cursor2'
+			? { background: mix( 80 ), border: 'none' }
+			: iconId === 'cursor4'
+				? { background: mix( 10 ), border: `1px solid ${ cursorColor }` }
+				: iconId === 'cursor5'
+					? { background: mix( 60 ), border: 'none' }
+					: { background: 'transparent', border: `1px solid ${ cursorColor }` };
+
+	const previewRingStyle = {
+		...baseOverlayStyle,
+		width: ringSize,
+		height: ringSize,
+		transition: 'all 0.2s linear',
+		willChange: 'transform, width, height',
+		...ringVariant,
+	};
+
+	const previewDotStyle = {
+		...baseOverlayStyle,
+		width: dotSize,
+		height: dotSize,
+		transition: 'all 0.1s linear',
+		background: iconId === 'cursor5' ? mix( 80 ) : cursorColor,
+		display: iconId === 'cursor3' ? 'none' : 'block',
+	};
+
+	const handlePreviewMove = ( e: { currentTarget: HTMLDivElement; clientX: number; clientY: number } ) => {
+		const box = e.currentTarget.getBoundingClientRect();
+		const x = e.clientX - box.left;
+		const y = e.clientY - box.top;
+
+		if ( previewDotRef.current ) {
+			previewDotRef.current.style.transform = `translate(${ x - dotSize / 2 }px, ${ y - dotSize / 2 }px)`;
+		}
+
+		if ( previewRingRef.current ) {
+			previewRingRef.current.style.transform = `translate(${ x - ringSize / 2 }px, ${ y - ringSize / 2 }px)`;
+		}
+	};
+
+	const handlePreviewLeave = () => {
+		if ( previewDotRef.current ) {
+			previewDotRef.current.style.transform = 'translate(-200px, -200px)';
+		}
+
+		if ( previewRingRef.current ) {
+			previewRingRef.current.style.transform = 'translate(-200px, -200px)';
+		}
+	};
+
 	const openMediaLibrary = () => {
 		const wpGlobal = ( window as unknown as { wp?: { media?: ( args: object ) => MediaFrame } } ).wp;
 
@@ -130,6 +216,7 @@ export default function Mouse() {
 			<SettingsField>
 				<BlockStack gap={ 10 }>
 					<Switcher
+						id="pnpna-enable-cursor"
 						title={ __( 'Enable Custom Cursor', 'ninja-accessibility' ) }
 						titleSize="sm"
 						checked={ enabled }
@@ -141,8 +228,12 @@ export default function Mouse() {
 				</BlockStack>
 			</SettingsField>
 
-			{ enabled && (
-				<>
+			<Disabled
+				depend={ ! enabled }
+				dependOn="pnpna-enable-cursor"
+				dependOnExact
+				gap={ 20 }
+			>
 					<SettingsField
 						title={ __( 'Cursor Style', 'ninja-accessibility' ) }
 						description={ __( 'Select the design and appearance of the custom cursor.', 'ninja-accessibility' ) }
@@ -155,11 +246,18 @@ export default function Mouse() {
 								<SelectBox
 									size="small"
 									background="gray-50"
-									style={ { width: 200 } }
+									style={ { width: 220 } }
 									options={ ICON_TYPES }
 									value={ [ iconType ] }
 									onChange={ ( value ) => {
 										const type = value[ 0 ] as 'icon' | 'custom';
+
+										// Custom cursor upload is a premium feature.
+										if ( type === 'custom' && ! isProUser ) {
+											window.open( window.pnpna?.upgradeUrl || '#', '_blank', 'noopener' );
+											return;
+										}
+
 										setIconType( type );
 										if ( type === 'icon' ) {
 											update( 'cursor_icon', { id: iconId === 'custom' ? 'cursor1' : iconId } );
@@ -221,23 +319,6 @@ export default function Mouse() {
 								</div>
 							) }
 
-							{ iconType === 'custom' && (
-								<InlineStack gap={ 15 }>
-									{ customIconUrl && (
-										<img src={ customIconUrl } alt="" width={ 32 } height={ 32 } />
-									) }
-									<Button
-										variant="outlined"
-										startIcon="upload"
-										onClick={ openMediaLibrary }
-									>
-										{ customIconUrl
-											? __( 'Change Icon', 'ninja-accessibility' )
-											: __( 'Upload Icon', 'ninja-accessibility' ) }
-									</Button>
-								</InlineStack>
-							) }
-
 							<BlockStack gap={ 10 }>
 								<Text size="sm" weight="medium" color="gray-700">
 									{ __( 'Cursor Size', 'ninja-accessibility' ) }
@@ -269,26 +350,6 @@ export default function Mouse() {
 								/>
 							</BlockStack>
 
-							<BlockStack gap={ 10 }>
-								<Text size="sm" weight="medium" color="gray-700">
-									{ __( 'Cursor Effect', 'ninja-accessibility' ) }
-								</Text>
-								<Description
-									text={ __( 'Add a motion effect that follows the cursor.', 'ninja-accessibility' ) }
-								/>
-								<SelectBox
-									size="small"
-									background="gray-50"
-									style={ { width: 200 } }
-									options={ CURSOR_EFFECTS }
-									value={ [ effect ] }
-									onChange={ ( value ) =>
-										update( 'cursor_effect_type', value[ 0 ] as PluginSettings[ 'cursor_effect_type' ] )
-									}
-								/>
-							</BlockStack>
-
-							{}
 						</BlockStack>
 					</SettingsField>
 
@@ -313,49 +374,6 @@ export default function Mouse() {
 						description={ __( 'Where the custom cursor should apply.', 'ninja-accessibility' ) }
 					>
 						<BlockStack gap={ 20 }>
-							<BlockStack gap={ 10 }>
-								<Text size="sm" weight="medium" color="gray-700">
-									{ __( 'Apply Cursor On', 'ninja-accessibility' ) }
-								</Text>
-								<SelectBox
-									size="small"
-									background="gray-50"
-									style={ { width: 220 } }
-									options={ [
-										{ value: 'entire_website', name: __( 'Entire Website', 'ninja-accessibility' ) },
-										{ value: 'page', name: __( 'Specific Page', 'ninja-accessibility' ) },
-									] }
-									value={ [ applyIsPage ? 'page' : 'entire_website' ] }
-									onChange={ ( value ) =>
-										update(
-											'apply_cursor',
-											value[ 0 ] === 'entire_website'
-												? 'entire_website'
-												: String( pages[ 0 ]?.value || 'entire_website' )
-										)
-									}
-								/>
-							</BlockStack>
-
-							{ applyIsPage && (
-								<BlockStack gap={ 10 }>
-									<Text size="sm" weight="medium" color="gray-700">
-										{ __( 'Specific Page', 'ninja-accessibility' ) }
-									</Text>
-									<SelectBox
-										size="small"
-										background="gray-50"
-										searchable
-										style={ { width: 280 } }
-										options={ pages.map( ( page ) => ( {
-											value: String( page.value ),
-											name: page.label,
-										} ) ) }
-										value={ [ applyCursor ] }
-										onChange={ ( value ) => update( 'apply_cursor', String( value[ 0 ] ) ) }
-									/>
-								</BlockStack>
-							) }
 
 							<BlockStack gap={ 10 }>
 								<Text size="sm" weight="medium" color="gray-700">
@@ -382,15 +400,26 @@ export default function Mouse() {
 					>
 						<div
 							className="pnpna-preview-cursor-box"
-							style={ { cursor: previewCursor } }
+							style={
+								isAnimatedShape
+									? { cursor: 'none', position: 'relative', overflow: 'hidden' }
+									: { cursor: previewCursor }
+							}
+							onMouseMove={ isAnimatedShape ? handlePreviewMove : undefined }
+							onMouseLeave={ isAnimatedShape ? handlePreviewLeave : undefined }
 						>
 							<div className="pnpna-preview-cursor-box__hint">
 								{ __( 'Move Your Cursor Here To Preview', 'ninja-accessibility' ) }
 							</div>
+							{ isAnimatedShape && (
+								<>
+									<div ref={ previewRingRef } aria-hidden="true" style={ previewRingStyle } />
+									<div ref={ previewDotRef } aria-hidden="true" style={ previewDotStyle } />
+								</>
+							) }
 						</div>
 					</SettingsField>
-				</>
-			) }
+			</Disabled>
 		</PageContainer>
 	);
 }

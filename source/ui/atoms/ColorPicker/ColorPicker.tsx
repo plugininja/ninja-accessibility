@@ -132,11 +132,6 @@ const ColorPicker: ColorPickerComponent = ({
                 />
             </div>
 
-            {/* <fs_premium_ui> */}
-            <Button variant="secondary" size="small" onClick={handleClear}>
-                {__("Clear", "ninja-accessibility")}
-            </Button>
-            {/* </fs_premium_ui> */}
         </div>
     );
 };

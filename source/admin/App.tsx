@@ -11,6 +11,7 @@ import { DEFAULT_MENU_KEY, DOCS_URL, SETTINGS_MENU } from '~/kernel/constants';
 import {
 	hydrate,
 	markSaved,
+	persistSetting,
 	selectHydrated,
 	selectIsDirty,
 	selectSettings,
@@ -48,6 +49,44 @@ export default function App() {
 			dispatch( hydrate( { settings: data.settings, defaults: data.defaults } ) );
 		}
 	}, [ data, hydrated, dispatch ] );
+
+	// ─── Dark mode ────────────────────────────────────────────────────────────
+
+	const currentTheme: 'light' | 'dark' =
+		( settings.admin_theme as 'light' | 'dark' ) || 'light';
+	const [ theme, setTheme ] = useState<'light' | 'dark'>( currentTheme );
+
+	// Sync theme from hydrated settings + apply to <html>.
+	useEffect( () => {
+		if ( hydrated && currentTheme !== theme ) {
+			setTheme( currentTheme );
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [ hydrated, settings.admin_theme ] );
+
+	useEffect( () => {
+		document.documentElement.setAttribute( 'pnpna-theme-status', theme );
+	}, [ theme ] );
+
+	const onToggleTheme = async () => {
+		const next: 'light' | 'dark' = theme === 'light' ? 'dark' : 'light';
+		const prev = theme;
+
+		// Apply instantly for snappy UX.
+		setTheme( next );
+		document.documentElement.setAttribute( 'pnpna-theme-status', next );
+
+		try {
+			// Persist via partial API update (independent of main Save button).
+			await updateSettings( { admin_theme: next } ).unwrap();
+			// Sync data + savedData for this single key — keeps other dirty flags intact.
+			dispatch( persistSetting( { key: 'admin_theme', value: next } ) );
+		} catch {
+			// Revert on failure.
+			setTheme( prev );
+			document.documentElement.setAttribute( 'pnpna-theme-status', prev );
+		}
+	};
 
 	const showToast = useCallback( ( type: Toast[ 'type' ], message: string ) => {
 		setToast( { type, message } );
@@ -123,6 +162,17 @@ export default function App() {
 				<Topbar
 					leftContents={ [ <Logo key="logo" /> ] }
 					rightContents={ [
+						<IconButton
+							key="theme"
+							variant="secondary"
+							name={ theme === 'light' ? 'dark_mode' : 'light_mode' }
+							title={
+								theme === 'light'
+									? __( 'Switch to dark mode', 'ninja-accessibility' )
+									: __( 'Switch to light mode', 'ninja-accessibility' )
+							}
+							onClick={ onToggleTheme }
+						/>,
 						<Button
 							key="save"
 							variant="primary"
@@ -150,6 +200,7 @@ export default function App() {
 					border={ false }
 					leftContents={ [ pageTitle ] }
 					rightContents={ [ docs ] }
+					wrap={ false }
 				/>
 
 				<MainLayout.Content>

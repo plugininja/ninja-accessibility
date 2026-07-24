@@ -33,6 +33,21 @@ export type FeatureKey =
  */
 export type ActiveFeatureMap = Partial<Record<FeatureKey, number>>;
 
+/**
+ * Accessibility profile identifiers (UserWay-style presets).
+ * Each profile maps to a group of feature steps — see
+ * features/widget/utils/profiles.ts.
+ */
+export type ProfileKey =
+	| 'motor_impaired'
+	| 'blind'
+	| 'color_blind'
+	| 'dyslexia'
+	| 'low_vision'
+	| 'cognitive_learning'
+	| 'seizure_epileptic'
+	| 'adhd';
+
 export interface FeatureMeta {
 	key: FeatureKey;
 	label: string;

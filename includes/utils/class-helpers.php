@@ -95,13 +95,6 @@ class Helpers {
 				continue;
 			}
 
-			// Legacy PHP serialization fallback.
-			if ( is_serialized( $value ) ) {
-				$unserialized      = maybe_unserialize( $value );
-				$formatted[ $key ] = is_array( $unserialized ) ? $unserialized : $value;
-				continue;
-			}
-
 			$formatted[ $key ] = $value;
 		}
 
@@ -170,7 +163,31 @@ class Helpers {
 	// -------------------------------------------------------------------------
 
 	/**
+	 * Capability keys that require a premium license (Accessiy pro map).
+	 *
+	 * Free installs never activate these on the frontend, regardless of
+	 * what is stored in the settings option.
+	 *
+	 * @var string[]
+	 */
+	public const PRO_CAPABILITIES = array(
+		'text_magnifier',
+		'page_structure',
+		'screen_reader',
+		'reading_mask',
+		'sitemap',
+		'mute_sounds',
+		'grey_scale',
+		'contrast',
+		'invert_color',
+		'saturation',
+	);
+
+	/**
 	 * Return the list of capability keys that are currently enabled.
+	 *
+	 * Premium-only capabilities are excluded unless the license allows
+	 * premium code.
 	 *
 	 * @return string[]
 	 */
@@ -201,11 +218,76 @@ class Helpers {
 			'saturation',
 		);
 
+		$is_pro = pnpna_is_pro();
+
 		return array_values(
 			array_filter(
 				$widget_keys,
-				static function ( string $key ): bool {
+				static function ( string $key ) use ( $is_pro ): bool {
+					if ( ! $is_pro && in_array( $key, self::PRO_CAPABILITIES, true ) ) {
+						return false;
+					}
+
 					return '1' === self::get_setting( $key );
+				}
+			)
+		);
+	}
+
+	// -------------------------------------------------------------------------
+	// Accessibility profiles
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Profile keys whose feature presets depend on premium capabilities.
+	 *
+	 * Free installs never expose these on the frontend, regardless of what
+	 * is stored in the settings option (mirrors PRO_CAPABILITIES).
+	 *
+	 * @var string[]
+	 */
+	public const PRO_PROFILES = array(
+		'blind',
+		'color_blind',
+		'seizure_epileptic',
+		'adhd',
+	);
+
+	/**
+	 * Return the list of profile keys that are currently enabled.
+	 *
+	 * Empty when the master profiles toggle is off. Premium-dependent
+	 * profiles are excluded unless the license allows premium code.
+	 *
+	 * @return string[]
+	 */
+	public static function get_active_profiles(): array {
+		if ( '1' !== self::get_setting( 'enable_profiles', '1' ) ) {
+			return array();
+		}
+
+		$profile_keys = array(
+			'motor_impaired',
+			'blind',
+			'color_blind',
+			'dyslexia',
+			'low_vision',
+			'cognitive_learning',
+			'seizure_epileptic',
+			'adhd',
+		);
+
+		$is_pro = pnpna_is_pro();
+
+		return array_values(
+			array_filter(
+				$profile_keys,
+				static function ( string $key ) use ( $is_pro ): bool {
+					if ( ! $is_pro && in_array( $key, self::PRO_PROFILES, true ) ) {
+						return false;
+					}
+
+					return '1' === self::get_setting( 'profile_' . $key, '1' );
 				}
 			)
 		);

@@ -16,6 +16,11 @@ class Activation {
 	public static function init(): void {
 		Helpers::check_requirements();
 		self::set_default_settings();
+
+		if ( class_exists( Analytics__premium_only::class ) ) {
+			Analytics__premium_only::create_table();
+		}
+
 		flush_rewrite_rules();
 	}
 

@@ -53,7 +53,7 @@ const Topbar = ({
             {children}
 
             {isValidArray(rightContents) && (
-                <InlineStack gap={10}>
+                <InlineStack gap={10} wrap={false}>
                     {rightContents.map(renderContent)}
                 </InlineStack>
             )}
